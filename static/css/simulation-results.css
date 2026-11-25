@@ -1,0 +1,124 @@
+/* Manuscript table structure on white and warm neutral surfaces. */
+.paper-results { margin-top: var(--section-heading-gap); }
+.simulation-tabs { margin: 0 0 24px; }
+.simulation-summary {
+  --summary-label-width: 180px;
+  --summary-success-width: 360px;
+  --summary-column-gap: 28px;
+  --speed-value-space: 70px;
+  --success-axis-start: 16px;
+  --success-value-space: 90px;
+  margin: 24px 0 22px;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.simulation-summary-head, .simulation-model-body, .simulation-summary-axis { display: grid; grid-template-columns: var(--summary-label-width) minmax(0, 1fr) var(--summary-success-width); column-gap: var(--summary-column-gap); align-items: center; }
+.simulation-summary-head { align-items: start; margin-bottom: 10px; font-size: 18px; font-weight: 600; line-height: 1.4; }
+.simulation-speed-heading { grid-column: 2; padding-right: var(--speed-value-space); text-align: left; }
+.simulation-success-heading { grid-column: 3; transform: translateX(calc((var(--success-axis-start) - var(--success-value-space)) / 2)); text-align: center; }
+.simulation-model { padding: 14px 0; }
+.simulation-model + .simulation-model { border-top: 1px solid var(--border); }
+.simulation-model h3 { margin: 0 0 8px; font-size: 18px; line-height: 1.4; letter-spacing: 0; }
+.simulation-model h3 .paper-model-math { font-weight: inherit; }
+.simulation-model h3 .paper-model-math mn { font-size: .62em; }
+.simulation-model-rows { grid-column: 1 / 3; }
+.simulation-summary-row { display: grid; grid-template-columns: var(--summary-label-width) minmax(0, 1fr); column-gap: var(--summary-column-gap); align-items: center; min-height: 48px; }
+.simulation-summary .is-baseline { --method-ink: #59656e; --method-fill: #59656e; }
+.simulation-summary .is-residual { --method-ink: var(--primary); --method-fill: #da8c60; }
+.simulation-summary .is-coupling { --method-ink: #45652e; --method-fill: #8aa871; }
+.simulation-method-name { color: var(--method-ink); font-size: 16px; line-height: 1.4; }
+.simulation-speed-cell { min-width: 0; padding-right: var(--speed-value-space); }
+.simulation-speed-plot { display: block; position: relative; height: 48px; }
+.simulation-speed-plot::after { content: ''; position: absolute; inset-block: 0; left: var(--baseline-speed); width: 1px; background: repeating-linear-gradient(to bottom, var(--control-border) 0 6px, transparent 6px 12px); pointer-events: none; }
+.simulation-speed-fill { position: absolute; top: 10px; bottom: 10px; left: 0; width: var(--speed); background: var(--method-fill); border-radius: 0 3px 3px 0; }
+.simulation-speed-value { position: absolute; left: calc(var(--speed) + 10px); top: 50%; transform: translateY(-50%); color: var(--method-ink); font-size: 20px; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+.simulation-success-chart { grid-column: 3; min-width: 0; position: relative; align-self: stretch; }
+.simulation-success-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.simulation-success-baseline { stroke: var(--control-border); stroke-width: 1; stroke-dasharray: 6 6; }
+.simulation-success-line { fill: none; stroke: var(--control-border); stroke-width: 1.7; stroke-linejoin: round; }
+.simulation-success-point { fill: var(--method-ink); stroke: var(--background); stroke-width: 1.5; }
+.simulation-success-label { font-size: 18px; font-weight: 600; fill: var(--method-ink); }
+.simulation-summary-axis > .simulation-speed-cell { grid-column: 2; }
+.simulation-success-axis { grid-column: 3; min-width: 0; padding-left: var(--success-axis-start); padding-right: var(--success-value-space); }
+.simulation-axis-track { position: relative; height: 28px; border-top: 1px solid var(--control-border); }
+.simulation-tick { position: absolute; top: 3px; left: var(--tick); transform: translateX(-50%); color: var(--muted); font-size: 13px; white-space: nowrap; }
+.simulation-tick.is-baseline { color: var(--text); font-weight: 700; }
+.simulation-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.simulation-full-results { border-block: 1px solid var(--border); }
+.simulation-full-results > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; list-style: none; }
+.simulation-full-results > summary::-webkit-details-marker { display: none; }
+.simulation-full-results > summary:hover { color: var(--primary); }
+.simulation-full-results > summary svg { flex: 0 0 18px; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.simulation-full-results[open] .simulation-details-plus { display: none; }
+.simulation-full-results > .paper-results-block { padding: 10px 0 22px; }
+.paper-results-block { margin: 0; }
+.paper-results-block + .paper-results-block { margin-top: 42px; }
+.paper-ablation-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 42px; }
+.paper-ablation-row > .paper-results-block { min-width: 0; margin: 0; }
+.paper-ablation-row .paper-results-block figcaption { min-height: 66px; }
+.paper-hyperparameters .figure-zoom { padding: 0 0 0 16px; border: 0; border-radius: 0; background: var(--background); }
+.paper-hyperparameters img { width: 100%; height: auto; }
+.paper-results-block figcaption { margin: 0 0 14px; color: var(--text); font-size: 19px; font-weight: 600; line-height: 1.5; text-align: left; }
+.paper-table-units { display: block; margin-top: 4px; font-size: 13px; font-weight: 400; color: var(--muted); }
+.paper-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; }
+.paper-results-table { width: 100%; min-width: 960px; table-layout: fixed; border-collapse: collapse; border-top: 2px solid var(--text); border-bottom: 2px solid var(--text); background: var(--background); color: var(--text); font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums lining-nums; }
+.paper-method-column { width: 180px; }
+.paper-model-math { font-family: "Cambria Math", "STIX Two Math", math; font-size: 1.12em; }
+.paper-budget-column { width: 64px; }
+.paper-results-table th, .paper-results-table td { padding: 9px 8px; text-align: center; white-space: nowrap; }
+.paper-results-table th { font-weight: 400; }
+.paper-results-table thead { border-bottom: 1px solid var(--muted); }
+.paper-results-table thead th { padding-block: 10px; }
+.paper-metric-direction { position: relative; top: -.08em; }
+.paper-results-table thead tr:first-child th[scope="colgroup"] { border-bottom: 1px solid var(--control-border); text-align: center; }
+.paper-results-table thead th:first-child, .paper-results-table tbody th[scope="rowgroup"], .paper-results-table tbody th[scope="row"]:not(.paper-budget) { text-align: left; padding-left: 16px; }
+.paper-results-table tbody + tbody { border-top: 1px solid var(--control-border); }
+.paper-results-table [data-result-method="residual"], .paper-results-table [data-result-method="coupling"] { background: var(--surface); }
+.paper-results-table strong { font-weight: 700; }
+.paper-second { text-decoration: underline; text-underline-offset: 3px; }
+.paper-table-libero-plus { min-width: 1200px; }
+.paper-table-robotwin { min-width: 860px; }
+.paper-table-steps { min-width: 540px; }
+.paper-table-steps .paper-method-column { width: 132px; }
+.paper-table-steps .paper-budget-column { width: 30px; }
+.paper-table-steps th, .paper-table-steps td { padding-inline: 4px; }
+@media (max-width: 1199px) {
+  .simulation-summary { --summary-label-width: 160px; --summary-success-width: 320px; --summary-column-gap: 20px; }
+  .paper-ablation-row { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .paper-ablation-row .paper-results-block figcaption { min-height: 0; }
+  .paper-hyperparameters .figure-zoom { max-width: 680px; }
+}
+@media (max-width: 899px) {
+  .simulation-summary { --summary-label-width: 140px; --summary-success-width: 230px; --summary-column-gap: 20px; --speed-value-space: 56px; }
+  .simulation-summary-head, .simulation-model-body, .simulation-summary-axis { grid-template-columns: minmax(0, 1fr) var(--summary-success-width); }
+  .simulation-summary-head { font-size: 16px; margin-bottom: 4px; }
+  .simulation-speed-heading { grid-column: 1; margin-left: calc(var(--summary-label-width) + var(--summary-column-gap)); }
+  .simulation-success-heading, .simulation-success-chart, .simulation-success-axis { grid-column: 2; }
+  .simulation-model-rows { grid-column: 1; }
+  .simulation-summary-axis > .simulation-speed-cell { grid-column: 1; padding-left: calc(var(--summary-label-width) + var(--summary-column-gap)); }
+  .simulation-summary-axis > .simulation-speed-cell .is-secondary { display: none; }
+  .simulation-tick { font-size: 12px; }
+  .simulation-speed-value { font-size: 18px; }
+  .simulation-speed-value { left: calc(var(--speed) + 7px); }
+  .simulation-model { padding: 12px 0; }
+  .simulation-model h3 { margin-bottom: 3px; }
+}
+@media (max-width: 599px) {
+  .simulation-summary { --summary-success-width: 140px; --summary-column-gap: 16px; --success-axis-start: 8px; --success-value-space: 76px; }
+  .simulation-speed-heading { margin-left: 0; padding-right: 0; }
+  .simulation-success-heading { transform: none; }
+  .simulation-summary-row { grid-template-columns: minmax(0, 1fr); }
+  .simulation-method-name { font-size: 14px; margin-top: 6px; }
+  .simulation-summary-axis > .simulation-speed-cell { padding-left: 0; }
+  .simulation-success-axis .is-secondary { display: none; }
+  .simulation-success-label { font-size: 16px; }
+}
+@media (max-width: 767px) {
+  .paper-ablation-row { margin-top: 32px; }
+  .paper-results-block + .paper-results-block { margin-top: 32px; }
+  .paper-ablation-row > .paper-results-block { margin: 0; }
+  .paper-results-block figcaption { font-size: 18px; }
+}
+@media (max-width: 374px) {
+  .simulation-summary { --summary-success-width: 116px; --summary-column-gap: 12px; --speed-value-space: 49px; }
+  .simulation-speed-value { font-size: 16px; }
+}

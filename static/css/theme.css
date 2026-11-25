@@ -1,0 +1,76 @@
+/* Page themes; scientific artwork keeps its original light canvas. */
+:root {
+  color-scheme: light;
+  --nav-background: rgba(255, 255, 255, .97);
+  --on-primary: var(--inverse-text);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #1b1b1a;
+  --surface: #2b2926;
+  --section-background: #242321;
+  --text: #f1ede7;
+  --muted: #d8d2cb;
+  --border: #4c4740;
+  --control-border: #a79c8f;
+  --primary: #ffb487;
+  --primary-hover: #ffd2b5;
+  --primary-subtle: #473226;
+  --on-primary: #1c1917;
+  --nav-background: rgba(27, 27, 26, .97);
+}
+.nav-inner .brand { margin-right: auto; }
+.theme-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+}
+.theme-toggle::before { content: ''; position: absolute; width: 32px; height: 32px; border: 1px solid currentColor; border-radius: 50%; pointer-events: none; }
+.theme-toggle:hover::before { background: rgba(128, 128, 128, .15); }
+.theme-toggle svg { position: relative; grid-area: 1 / 1; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.theme-icon-sun, :root[data-theme="dark"] .theme-icon-moon { display: none; }
+:root[data-theme="dark"] .theme-icon-sun { display: block; }
+.topbar.scrolled, .topbar.menu-open { background: var(--nav-background); }
+.button-primary, .button-primary:hover,
+.task-tabs button[aria-selected="true"], .result-tabs button[aria-selected="true"] { color: var(--on-primary); }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .nav-inner { gap: 16px; }
+  .nav-links { gap: 16px; }
+}
+@media (max-width: 767px) {
+  .nav-inner { gap: 12px; }
+  .nav-toggle { min-height: 44px; }
+}
+
+:root[data-theme="dark"] .observation-comparison { --observation-coupling-ink: #bbd2a6; }
+:root[data-theme="dark"] .simulation-summary .is-baseline { --method-ink: #c1cbd1; }
+:root[data-theme="dark"] .simulation-summary .is-coupling { --method-ink: #bbd2a6; }
+
+/* Preserve Figure 2's colors and black mathematical notation, including controls. */
+:root[data-theme="dark"] :is(.figure-zoom:not(.figure-themed), .dialog-image-wrap:not(.figure-themed), .sag-animation-card, #sampling-player, #sag-player) {
+  color-scheme: light;
+  --background: #ffffff;
+  --surface: #f8f7f5;
+  --text: #24211e;
+  --muted: #625c55;
+  --border: #e5dfd7;
+  --control-border: #8a8075;
+  --primary: #c2410c;
+  --primary-hover: #9a3412;
+  --primary-subtle: #fff2e9;
+  --sampling-canvas: #ffffff;
+  background: var(--background);
+  color: var(--text);
+}
+:root[data-theme="dark"] :is(#sampling-player, #sag-player) { border-radius: 12px; }
+
+.figure-zoom .figure-dark, :root[data-theme="dark"] .figure-zoom .figure-light { display: none; }
+:root[data-theme="dark"] .figure-zoom .figure-dark { display: block; }

@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A plug-and-play inference acceleration framework for WAMs without additional training or auxiliary models.">
+  <meta name="theme-color" content="#1c1917">
+  <meta property="og:title" content="Speculative Action Generation for World Action Models">
+  <meta property="og:description" content="A plug-and-play inference acceleration framework for WAMs without additional training or auxiliary models.">
+  <meta property="og:image" content="https://sag-wam.github.io/static/images/hero-robot.jpg">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="https://sag-wam.github.io/">
+  <meta property="og:url" content="https://sag-wam.github.io/">
+  <title>SAG — Speculative Action Generation for World Action Models</title>
+  <script src="static/js/theme.js?v=themed-chart-20261125"></script>
+  <link rel="icon" href="favicon.ico?v=solid-slim-lightning-20261125" type="image/x-icon" sizes="16x16 32x32 48x48 64x64 128x128 256x256">
+  <link rel="icon" href="static/images/favicon.svg?v=solid-slim-lightning-20261125" type="image/svg+xml" sizes="any">
+  <link rel="stylesheet" href="static/css/project.css?v=algorithm-heading-gap-20261125">
+  <link rel="stylesheet" href="static/css/simulation-results.css?v=balanced-section-spacing-20261125">
+  <link rel="stylesheet" href="static/css/theme.css?v=themed-chart-20261125">
+  <link rel="stylesheet" href="static/css/mobile.css?v=mobile-compact-cards-20261125" media="(max-width: 767px)">
+  <script defer src="static/js/sag.js?v=themed-chart-20261125"></script>
+  <script defer src="static/js/simulation-results.js?v=result-title-cleanup-20261125"></script>
+  <script defer src="static/js/real-world-results.js?v=observation-benchmarks-20261124"></script>
+  <script defer src="static/js/sampling-controls.js"></script>
+  <script defer src="static/js/latency-math.js"></script>
+  <script defer src="static/js/sampling.js?v=mobile-layout-20261125"></script>
+  <script defer src="static/js/sampling-timing.js"></script>
+  <script defer src="static/js/coupling-correction.js"></script>
+  <script defer src="static/js/sampling-details.js"></script>
+  <script defer src="static/js/sampling-variants.js?v=mobile-layout-20261125"></script>
+  <script defer src="static/js/speculative.js?v=mobile-layout-20261125"></script>
+</head>
+<body>
+  <a class="skip-link" href="#demos">Skip to content</a>
+  <nav class="topbar" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a class="brand" href="#top" aria-label="SAG home"><img class="brand-icon" src="static/images/favicon.svg?v=solid-slim-lightning-20261125" width="34" height="34" alt="" aria-hidden="true"><span>SAG</span></a>
+      <div class="nav-links" id="main-nav">
+        <a href="#demos">Demos</a><a href="#observation">Observation</a><a href="#sampling">Method</a><a href="#sag-algorithms">Algorithms</a><a href="#results">Results</a><a href="#citation">Citation</a>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Switch to dark mode" hidden>
+        <svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13a8.5 8.5 0 0 1-9.5-9.5A8.5 8.5 0 1 0 20.5 13Z"/></svg>
+        <svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+      </button>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    </div>
+  </nav>
+
+  <header class="publication-header" id="top">
+    <video class="hero-video" id="hero-video" muted loop playsinline preload="metadata" poster="static/images/hero-robot.jpg" aria-hidden="true" tabindex="-1">
+      <source src="static/videos/hero-robot.mp4" type="video/mp4">
+    </video>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="hero-body">
+      <div class="container page-width">
+        <p class="eyebrow hero-eyebrow">Inference Acceleration · Speculative Sampling</p>
+        <h1 class="publication-title"><span class="title-initial">S</span>peculative <span class="title-initial">A</span>ction <span class="title-initial">G</span>eneration for World Action Models</h1>
+        <p class="hero-summary">SAG uses speculative sampling to accelerate action generation, a major bottleneck in WAM inference, without additional training or auxiliary models.</p>
+        <div class="publication-authors" aria-label="Authors">
+          <div class="author-row"><span>Lingkun Xiu<sup>1</sup></span><span>Xiaobo Wang<sup title="Corresponding author">2,3,†</sup></span><span>Bingwen Wei<sup>1</sup></span><span>Ruoyu Zhao<sup>4</sup></span><span>Jiahong Ning<sup>5</sup></span></div>
+          <div class="author-row"><span>Maoqing Li<sup>6</sup></span><span>Renquan Wan<sup>6</sup></span><span>Xiao-Ping Zhang<sup>1</sup></span><span>Jincheng Yu<sup>1</sup></span><span>Xinlei Chen<sup title="Corresponding author">1,†</sup></span></div>
+        </div>
+        <div class="publication-affiliations" aria-label="Author affiliations">
+          <div><span><sup>1</sup> Tsinghua University</span><span><sup>2</sup> Shenzhen University of Advanced Technology</span><span><sup>3</sup> Sangfor Technologies Inc.</span></div>
+          <div><span><sup>4</sup> City University of Hong Kong</span><span><sup>5</sup> Infinigence AI</span><span><sup>6</sup> AGIBot</span></div>
+        </div>
+        <div class="publication-links">
+          <!-- Add the author's arXiv URL when supplied. Do not host a manuscript PDF. -->
+          <span class="resource-pending">arXiv forthcoming</span>
+          <a class="button button-primary" href="https://github.com/Griseo-Kaslana/SAG" target="_blank" rel="noopener">Code</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="highlight-band container">
+      <div class="highlights" aria-label="Research highlights">
+        <div><strong>1.89–2.22<span>×</span></strong><p>Action <span class="highlight-generation">generation </span>speedup<br>on LIBERO</p></div>
+        <div><strong>2.13–3.27<span>×</span></strong><p>Action <span class="highlight-generation">generation </span>speedup<br>on RoboTwin 2.0</p></div>
+        <div><strong>Plug-and-play</strong><p>No additional training<br>or auxiliary models</p></div>
+        <div><strong>Two algorithms</strong><p>SAG-Residual<br>SAG-Coupling</p></div>
+      </div>
+    </div>
+
+    <section class="section demo-section" id="demos" aria-labelledby="demo-title">
+      <div class="container">
+        <p class="eyebrow section-index">§ 1 · Real-World Demos</p>
+        <div class="demo-heading"><h2 id="demo-title">Same task.
+Faster inference.</h2></div>
+        <div class="demo-toolbar">
+          <div class="task-tabs" role="tablist" aria-label="Robot task">
+            <button role="tab" id="tab-banana" aria-selected="true" aria-controls="task-panel" data-task="banana" tabindex="0">Banana pick-and-place</button>
+            <button role="tab" id="tab-blocks" aria-selected="false" aria-controls="task-panel" data-task="blocks" tabindex="-1">Block stacking</button>
+            <button role="tab" id="tab-drawer" aria-selected="false" aria-controls="task-panel" data-task="drawer" tabindex="-1">Toy storage</button>
+            <button role="tab" id="tab-shuttlecocks" aria-selected="false" aria-controls="task-panel" data-task="shuttlecocks" tabindex="-1">Shuttlecock stacking</button>
+          </div>
+          <span class="video-speed">1× playback</span>
+        </div>
+        <div role="tabpanel" id="task-panel" aria-labelledby="tab-banana">
+          <video id="task-video" controls muted loop playsinline preload="metadata" poster="static/images/banana-poster.jpg" aria-label="Banana pick-and-place: Base, SAG-Residual, and SAG-Coupling, shown at original speed">
+            <source src="static/videos/banana.mp4" type="video/mp4">
+            Your browser does not support video. <a href="static/videos/banana.mp4">Download the demonstration.</a>
+          </video>
+          <p id="task-video-error" class="video-error" role="status" hidden>The video could not be loaded. Select another task or reload the page.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint observation-section" id="observation" aria-labelledby="observation-title">
+      <div class="container">
+        <p class="eyebrow section-index">§ 2 · Observation</p>
+        <h2 id="observation-title">Action Generation Is Now the Remaining Bottleneck</h2>
+        <div class="task-tabs observation-tabs" role="tablist" aria-label="Benchmark for inference latency comparison">
+          <button type="button" role="tab" id="latency-tab-libero" aria-selected="true" aria-controls="latency-panel-libero" data-latency-benchmark="libero" tabindex="0">LIBERO</button>
+          <button type="button" role="tab" id="latency-tab-libero-plus" aria-selected="false" aria-controls="latency-panel-libero-plus" data-latency-benchmark="libero-plus" tabindex="-1">LIBERO-Plus</button>
+          <button type="button" role="tab" id="latency-tab-robotwin" aria-selected="false" aria-controls="latency-panel-robotwin" data-latency-benchmark="robotwin" tabindex="-1">RoboTwin 2.0</button>
+          <button type="button" role="tab" id="latency-tab-real-world" aria-selected="false" aria-controls="latency-panel-real-world" data-latency-benchmark="real-world" tabindex="-1">Real-world</button>
+        </div>
+        <figure class="observation-comparison" id="demo-latency-chart" aria-label="LIBERO. Baseline action share and measured inference latency with SAG. Dashed outlines and percentage decreases show action latency saved. Right-hand outlines show measured other latency plus baseline action latency.">
+          <div class="demo-chart-panel" id="latency-panel-libero" role="tabpanel" aria-labelledby="latency-tab-libero" data-chart-benchmark="libero" data-chart-title="LIBERO">
+            <div class="observation-layout-headings" aria-hidden="true">
+              <h3>Action Dominates Inference Latency</h3>
+              <h3>SAG Cuts Action Latency</h3>
+            </div>
+            <div class="observation-rows">
+              <div class="observation-model-row" data-latency-model="Fast-WAM" role="group" aria-labelledby="latency-libero-fast-wam">
+                <div class="observation-breakdown" style="--baseline-width:100.00000000%;--mobile-baseline-width:98.9153472136%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-libero-fast-wam">Fast-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 282.9 milliseconds out of 317.4 milliseconds overall inference latency">282.9 / 317.4&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="282.88" data-overall="317.36" data-remaining="34.48" data-scale-total="317.36" style="--action-share:89.13536678%" role="img" aria-label="Fast-WAM baseline. Action generation: 282.88 ms, 89% of overall inference latency. Other stages: 34.48 ms. Total: 317.36 ms.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>89%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <h3 class="observation-mobile-heading observation-mobile-only">SAG Cuts Action Latency</h3>
+                  <div class="observation-method" data-method="residual" data-action="127.17" data-overall="165.13" data-remaining="37.96" data-action-saved="155.71" data-reference-total="320.84" data-scale-total="320.84" style="--plot-share:100.00000000%;--remaining-share:11.83144246%;--action-share:39.63657898%;--saved-share:48.53197856%;--used-share:51.46802144%;--plot-width:calc((100% - 2px) * 1.0000000000 + 2px);--mobile-plot-width:100.0000000000%" role="group" aria-label="SAG-Residual, Fast-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-residual-title">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 127.2 milliseconds out of 165.1 milliseconds overall inference latency">127.2 / 165.1&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 37.96 ms. Action generation: 127.17 ms. Measured total: 165.13 ms. Action time saved: 155.71 ms relative to baseline action latency 282.88 ms. The outlined length is measured other latency plus baseline action latency, 320.84 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 55%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−55%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="139.85" data-overall="175.60" data-remaining="35.75" data-action-saved="143.03" data-reference-total="318.63" data-scale-total="320.84" style="--plot-share:99.31118314%;--remaining-share:11.21991024%;--action-share:43.89103349%;--saved-share:44.88905627%;--used-share:55.11094373%;--plot-width:calc((100% - 2px) * 0.9931118314 + 2px);--mobile-plot-width:99.3111831442%" role="group" aria-label="SAG-Coupling, Fast-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-coupling-title">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 139.9 milliseconds out of 175.6 milliseconds overall inference latency">139.9 / 175.6&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 35.75 ms. Action generation: 139.85 ms. Measured total: 175.60 ms. Action time saved: 143.03 ms relative to baseline action latency 282.88 ms. The outlined length is measured other latency plus baseline action latency, 318.63 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 51%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−51%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="observation-model-row" data-latency-model="Faster-WAM" role="group" aria-labelledby="latency-libero-faster-wam">
+                <div class="observation-breakdown" style="--baseline-width:79.22863625%;--mobile-baseline-width:78.3692806383%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-libero-faster-wam">Faster-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 204.9 milliseconds out of 251.4 milliseconds overall inference latency">204.9 / 251.4&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="204.88" data-overall="251.44" data-remaining="46.56" data-scale-total="317.36" style="--action-share:81.48265988%" role="img" aria-label="Faster-WAM baseline. Action generation: 204.88 ms, 81% of overall inference latency. Other stages: 46.56 ms. Total: 251.44 ms.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>81%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <div class="observation-method" data-method="residual" data-action="101.38" data-overall="148.11" data-remaining="46.73" data-action-saved="103.50" data-reference-total="251.61" data-scale-total="320.84" style="--plot-share:78.42226655%;--remaining-share:18.57239378%;--action-share:40.29251620%;--saved-share:41.13509002%;--used-share:58.86490998%;--plot-width:calc((100% - 2px) * 0.7842226655 + 2px);--mobile-plot-width:78.4222665503%" role="group" aria-label="SAG-Residual, Faster-WAM">
+                    <div class="observation-method-heading">
+                      <h4 class="observation-method-title observation-residual-title observation-mobile-only">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 101.4 milliseconds out of 148.1 milliseconds overall inference latency">101.4 / 148.1&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 46.73 ms. Action generation: 101.38 ms. Measured total: 148.11 ms. Action time saved: 103.50 ms relative to baseline action latency 204.88 ms. The outlined length is measured other latency plus baseline action latency, 251.61 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 51%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−51%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="108.56" data-overall="157.23" data-remaining="48.67" data-action-saved="96.32" data-reference-total="253.55" data-scale-total="320.84" style="--plot-share:79.02692931%;--remaining-share:19.19542497%;--action-share:42.81601262%;--saved-share:37.98856241%;--used-share:62.01143759%;--plot-width:calc((100% - 2px) * 0.7902692931 + 2px);--mobile-plot-width:79.0269293106%" role="group" aria-label="SAG-Coupling, Faster-WAM">
+                    <div class="observation-method-heading">
+                      <h4 class="observation-method-title observation-coupling-title observation-mobile-only">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 108.6 milliseconds out of 157.2 milliseconds overall inference latency">108.6 / 157.2&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 48.67 ms. Action generation: 108.56 ms. Measured total: 157.23 ms. Action time saved: 96.32 ms relative to baseline action latency 204.88 ms. The outlined length is measured other latency plus baseline action latency, 253.55 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 47%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−47%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="observation-legend-row">
+              <p class="observation-legend"><span class="observation-legend-swatch" aria-hidden="true"></span><span>Visual processing + VAE encoding + other stages</span></p>
+              <p class="observation-legend observation-savings-legend"><span class="observation-savings-swatches" aria-hidden="true"><span class="observation-saved-key observation-saved-key-residual"></span><span class="observation-saved-key observation-saved-key-coupling"></span></span><span>Action time saved (vs. baseline action)</span><span class="observation-values-key">Values: action / overall latency (ms)</span></p>
+            </div>
+          </div>
+          <div class="demo-chart-panel" id="latency-panel-libero-plus" role="tabpanel" aria-labelledby="latency-tab-libero-plus" data-chart-benchmark="libero-plus" data-chart-title="LIBERO-Plus" hidden>
+            <div class="observation-layout-headings" aria-hidden="true">
+              <h3>Action Dominates Inference Latency</h3>
+              <h3>SAG Cuts Action Latency</h3>
+            </div>
+            <div class="observation-rows">
+              <div class="observation-model-row" data-latency-model="Fast-WAM" role="group" aria-labelledby="latency-libero-plus-fast-wam">
+                <div class="observation-breakdown" style="--baseline-width:100.00000000%;--mobile-baseline-width:98.7961627688%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-libero-plus-fast-wam">Fast-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 280.8 milliseconds out of 315.1 milliseconds overall inference latency">280.8 / 315.1&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="280.83" data-overall="315.14" data-remaining="34.31" data-scale-total="315.14" style="--action-share:89.11277527%" role="img" aria-label="Fast-WAM baseline. Action generation: 280.83 ms, 89% of overall inference latency. Other stages: 34.31 ms. Total: 315.14 ms.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>89%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <h3 class="observation-mobile-heading observation-mobile-only">SAG Cuts Action Latency</h3>
+                  <div class="observation-method" data-method="residual" data-action="126.90" data-overall="165.05" data-remaining="38.15" data-action-saved="153.93" data-reference-total="318.98" data-scale-total="318.98" style="--plot-share:100.00000000%;--remaining-share:11.95999749%;--action-share:39.78305850%;--saved-share:48.25694401%;--used-share:51.74305599%;--plot-width:calc((100% - 2px) * 1.0000000000 + 2px);--mobile-plot-width:100.0000000000%" role="group" aria-label="SAG-Residual, Fast-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-residual-title">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 126.9 milliseconds out of 165.1 milliseconds overall inference latency">126.9 / 165.1&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 38.15 ms. Action generation: 126.90 ms. Measured total: 165.05 ms. Action time saved: 153.93 ms relative to baseline action latency 280.83 ms. The outlined length is measured other latency plus baseline action latency, 318.98 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 55%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−55%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="141.20" data-overall="177.17" data-remaining="35.97" data-action-saved="139.63" data-reference-total="316.80" data-scale-total="318.98" style="--plot-share:99.31657157%;--remaining-share:11.35416667%;--action-share:44.57070707%;--saved-share:44.07512626%;--used-share:55.92487374%;--plot-width:calc((100% - 2px) * 0.9931657157 + 2px);--mobile-plot-width:99.3165715719%" role="group" aria-label="SAG-Coupling, Fast-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-coupling-title">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 141.2 milliseconds out of 177.2 milliseconds overall inference latency">141.2 / 177.2&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 35.97 ms. Action generation: 141.20 ms. Measured total: 177.17 ms. Action time saved: 139.63 ms relative to baseline action latency 280.83 ms. The outlined length is measured other latency plus baseline action latency, 316.80 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 50%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−50%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="observation-model-row" data-latency-model="Faster-WAM" role="group" aria-labelledby="latency-libero-plus-faster-wam">
+                <div class="observation-breakdown" style="--baseline-width:82.67119376%;--mobile-baseline-width:81.6759671453%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-libero-plus-faster-wam">Faster-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 205.7 milliseconds out of 260.5 milliseconds overall inference latency">205.7 / 260.5&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="205.74" data-overall="260.53" data-remaining="54.79" data-scale-total="315.14" style="--action-share:78.96979235%" role="img" aria-label="Faster-WAM baseline. Action generation: 205.74 ms, 79% of overall inference latency. Other stages: 54.79 ms. Total: 260.53 ms.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>79%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <div class="observation-method" data-method="residual" data-action="118.57" data-overall="165.75" data-remaining="47.18" data-action-saved="87.17" data-reference-total="252.92" data-scale-total="318.98" style="--plot-share:79.29023763%;--remaining-share:18.65411988%;--action-share:46.88043650%;--saved-share:34.46544362%;--used-share:65.53455638%;--plot-width:calc((100% - 2px) * 0.7929023763 + 2px);--mobile-plot-width:79.2902376325%" role="group" aria-label="SAG-Residual, Faster-WAM">
+                    <div class="observation-method-heading">
+                      <h4 class="observation-method-title observation-residual-title observation-mobile-only">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 118.6 milliseconds out of 165.8 milliseconds overall inference latency">118.6 / 165.8&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 47.18 ms. Action generation: 118.57 ms. Measured total: 165.75 ms. Action time saved: 87.17 ms relative to baseline action latency 205.74 ms. The outlined length is measured other latency plus baseline action latency, 252.92 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 42%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−42%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="110.01" data-overall="159.50" data-remaining="49.49" data-action-saved="95.73" data-reference-total="255.23" data-scale-total="318.98" style="--plot-share:80.01442097%;--remaining-share:19.39035380%;--action-share:43.10229989%;--saved-share:37.50734632%;--used-share:62.49265368%;--plot-width:calc((100% - 2px) * 0.8001442097 + 2px);--mobile-plot-width:80.0144209668%" role="group" aria-label="SAG-Coupling, Faster-WAM">
+                    <div class="observation-method-heading">
+                      <h4 class="observation-method-title observation-coupling-title observation-mobile-only">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 110.0 milliseconds out of 159.5 milliseconds overall inference latency">110.0 / 159.5&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 49.49 ms. Action generation: 110.01 ms. Measured total: 159.50 ms. Action time saved: 95.73 ms relative to baseline action latency 205.74 ms. The outlined length is measured other latency plus baseline action latency, 255.23 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 47%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−47%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="observation-legend-row">
+              <p class="observation-legend"><span class="observation-legend-swatch" aria-hidden="true"></span><span>Visual processing + VAE encoding + other stages</span></p>
+              <p class="observation-legend observation-savings-legend"><span class="observation-savings-swatches" aria-hidden="true"><span class="observation-saved-key observation-saved-key-residual"></span><span class="observation-saved-key observation-saved-key-coupling"></span></span><span>Action time saved (vs. baseline action)</span><span class="observation-values-key">Values: action / overall latency (ms)</span></p>
+            </div>
+          </div>
+          <div class="demo-chart-panel" id="latency-panel-robotwin" role="tabpanel" aria-labelledby="latency-tab-robotwin" data-chart-benchmark="robotwin" data-chart-title="RoboTwin 2.0" hidden>
+            <div class="observation-layout-headings" aria-hidden="true">
+              <h3>Action Dominates Inference Latency</h3>
+              <h3>SAG Cuts Action Latency</h3>
+            </div>
+            <div class="observation-rows">
+              <div class="observation-model-row" data-latency-model="Fast-WAM" role="group" aria-labelledby="latency-robotwin-fast-wam">
+                <div class="observation-breakdown" style="--baseline-width:100.00000000%;--mobile-baseline-width:99.9584967524%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-robotwin-fast-wam">Fast-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 429.0 milliseconds out of 481.7 milliseconds overall inference latency">429.0 / 481.7&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="428.95" data-overall="481.69" data-remaining="52.74" data-scale-total="481.69" style="--action-share:89.05104943%" role="img" aria-label="Fast-WAM baseline. Action generation: 428.95 ms, 89% of overall inference latency. Other stages: 52.74 ms. Total: 481.69 ms.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>89%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <h3 class="observation-mobile-heading observation-mobile-only">SAG Cuts Action Latency</h3>
+                  <div class="observation-method" data-method="residual" data-action="132.53" data-overall="185.47" data-remaining="52.94" data-action-saved="296.42" data-reference-total="481.89" data-scale-total="481.89" style="--plot-share:100.00000000%;--remaining-share:10.98590965%;--action-share:27.50212704%;--saved-share:61.51196331%;--used-share:38.48803669%;--plot-width:calc((100% - 2px) * 1.0000000000 + 2px);--mobile-plot-width:100.0000000000%" role="group" aria-label="SAG-Residual, Fast-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-residual-title">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 132.5 milliseconds out of 185.5 milliseconds overall inference latency">132.5 / 185.5&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 52.94 ms. Action generation: 132.53 ms. Measured total: 185.47 ms. Action time saved: 296.42 ms relative to baseline action latency 428.95 ms. The outlined length is measured other latency plus baseline action latency, 481.89 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 69%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−69%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="201.13" data-overall="251.51" data-remaining="50.38" data-action-saved="227.82" data-reference-total="479.33" data-scale-total="481.89" style="--plot-share:99.46875843%;--remaining-share:10.51050425%;--action-share:41.96065341%;--saved-share:47.52884234%;--used-share:52.47115766%;--plot-width:calc((100% - 2px) * 0.9946875843 + 2px);--mobile-plot-width:99.4687584303%" role="group" aria-label="SAG-Coupling, Fast-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-coupling-title">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 201.1 milliseconds out of 251.5 milliseconds overall inference latency">201.1 / 251.5&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 50.38 ms. Action generation: 201.13 ms. Measured total: 251.51 ms. Action time saved: 227.82 ms relative to baseline action latency 428.95 ms. The outlined length is measured other latency plus baseline action latency, 479.33 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 53%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−53%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="observation-model-row" data-latency-model="Faster-WAM" role="group" aria-labelledby="latency-robotwin-faster-wam">
+                <div class="observation-breakdown" style="--baseline-width:72.00896842%;--mobile-baseline-width:71.9790823632%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-robotwin-faster-wam">Faster-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 286.4 milliseconds out of 346.9 milliseconds overall inference latency">286.4 / 346.9&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="286.41" data-overall="346.86" data-remaining="60.45" data-scale-total="481.69" style="--action-share:82.57221934%" role="img" aria-label="Faster-WAM baseline. Action generation: 286.41 ms, 83% of overall inference latency. Other stages: 60.45 ms. Total: 346.86 ms.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>83%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <div class="observation-method" data-method="residual" data-action="87.52" data-overall="148.19" data-remaining="60.67" data-action-saved="198.89" data-reference-total="347.08" data-scale-total="481.89" style="--plot-share:72.02473594%;--remaining-share:17.48011986%;--action-share:25.21608851%;--saved-share:57.30379163%;--used-share:42.69620837%;--plot-width:calc((100% - 2px) * 0.7202473594 + 2px);--mobile-plot-width:72.0247359356%" role="group" aria-label="SAG-Residual, Faster-WAM">
+                    <div class="observation-method-heading">
+                      <h4 class="observation-method-title observation-residual-title observation-mobile-only">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 87.5 milliseconds out of 148.2 milliseconds overall inference latency">87.5 / 148.2&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 60.67 ms. Action generation: 87.52 ms. Measured total: 148.19 ms. Action time saved: 198.89 ms relative to baseline action latency 286.41 ms. The outlined length is measured other latency plus baseline action latency, 347.08 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 69%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−69%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="120.37" data-overall="180.37" data-remaining="60.00" data-action-saved="166.04" data-reference-total="346.41" data-scale-total="481.89" style="--plot-share:71.88570006%;--remaining-share:17.32051615%;--action-share:34.74784215%;--saved-share:47.93164170%;--used-share:52.06835830%;--plot-width:calc((100% - 2px) * 0.7188570006 + 2px);--mobile-plot-width:71.8857000560%" role="group" aria-label="SAG-Coupling, Faster-WAM">
+                    <div class="observation-method-heading">
+                      <h4 class="observation-method-title observation-coupling-title observation-mobile-only">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 120.4 milliseconds out of 180.4 milliseconds overall inference latency">120.4 / 180.4&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 60.00 ms. Action generation: 120.37 ms. Measured total: 180.37 ms. Action time saved: 166.04 ms relative to baseline action latency 286.41 ms. The outlined length is measured other latency plus baseline action latency, 346.41 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 58%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−58%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="observation-legend-row">
+              <p class="observation-legend"><span class="observation-legend-swatch" aria-hidden="true"></span><span>Visual processing + VAE encoding + other stages</span></p>
+              <p class="observation-legend observation-savings-legend"><span class="observation-savings-swatches" aria-hidden="true"><span class="observation-saved-key observation-saved-key-residual"></span><span class="observation-saved-key observation-saved-key-coupling"></span></span><span>Action time saved (vs. baseline action)</span><span class="observation-values-key">Values: action / overall latency (ms)</span></p>
+            </div>
+          </div>
+          <div class="demo-chart-panel" id="latency-panel-real-world" role="tabpanel" aria-labelledby="latency-tab-real-world" data-chart-benchmark="real-world" data-chart-title="Real-world" hidden>
+            <div class="observation-layout-headings" aria-hidden="true">
+              <h3>Action Dominates Inference Latency</h3>
+              <h3>SAG Cuts Action Latency</h3>
+            </div>
+            <div class="observation-rows">
+              <div class="observation-model-row" data-latency-model="Faster-WAM" role="group" aria-labelledby="latency-real-world-faster-wam">
+                <div class="observation-breakdown" style="--baseline-width:100.00000000%;--mobile-baseline-width:99.7134581726%">
+                  <div class="observation-baseline-heading observation-model-heading">
+                    <h4 id="latency-real-world-faster-wam">Faster-WAM</h4>
+                    <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 117.7 milliseconds out of 160.9 milliseconds overall inference latency">117.7 / 160.9&nbsp;ms</span>
+                  </div>
+                  <div class="observation-baseline-strip" data-method="base" data-action="117.6975" data-overall="160.945" data-remaining="43.2475" data-scale-total="160.945" style="--action-share:73.12901923%" role="img" aria-label="Faster-WAM baseline. Action generation: 117.6975 ms, 73% of overall inference latency. Other stages: 43.2475 ms. Total: 160.945 ms. Mean across four real-world tasks.">
+                    <span class="observation-other-segment" aria-hidden="true"></span>
+                    <span class="observation-action-segment" aria-hidden="true"><span>Action generation</span><strong>73%</strong></span>
+                  </div>
+                </div>
+                <div class="observation-methods">
+                  <h3 class="observation-mobile-heading observation-mobile-only">SAG Cuts Action Latency</h3>
+                  <div class="observation-method" data-method="residual" data-action="50.4925" data-overall="94.2025" data-remaining="43.7100" data-action-saved="67.2050" data-reference-total="161.4075" data-scale-total="161.4075" style="--plot-share:100.00000000%;--remaining-share:27.08052600%;--action-share:31.28262317%;--saved-share:41.63685083%;--used-share:58.36314917%;--plot-width:calc((100% - 2px) * 1.0000000000 + 2px);--mobile-plot-width:100.0000000000%" role="group" aria-label="SAG-Residual, Faster-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-residual-title">+ SAG-Residual</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 50.5 milliseconds out of 94.2 milliseconds overall inference latency">50.5 / 94.2&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Residual. Other stages: 43.7100 ms. Action generation: 50.4925 ms. Measured total: 94.2025 ms. Action time saved: 67.2050 ms relative to baseline action latency 117.6975 ms. The outlined length is measured other latency plus baseline action latency, 161.4075 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 57%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−57%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="observation-method" data-method="coupling" data-action="57.8925" data-overall="101.2025" data-remaining="43.3100" data-action-saved="59.8050" data-reference-total="161.0075" data-scale-total="161.4075" style="--plot-share:99.75218004%;--remaining-share:26.89936804%;--action-share:35.95639955%;--saved-share:37.14423241%;--used-share:62.85576759%;--plot-width:calc((100% - 2px) * 0.9975218004 + 2px);--mobile-plot-width:99.7521800412%" role="group" aria-label="SAG-Coupling, Faster-WAM">
+                    <div class="observation-method-heading observation-method-heading-with-title">
+                      <h4 class="observation-method-title observation-coupling-title">+ SAG-Coupling</h4>
+                      <span class="observation-latency-values" title="Action generation / overall inference latency" aria-label="Action generation 57.9 milliseconds out of 101.2 milliseconds overall inference latency">57.9 / 101.2&nbsp;ms</span>
+                    </div>
+                    <div class="observation-method-plot">
+                      <div class="observation-action-track" role="img" title="Solid outline: measured inference latency. Dashed outline: action time saved." aria-label="SAG-Coupling. Other stages: 43.3100 ms. Action generation: 57.8925 ms. Measured total: 101.2025 ms. Action time saved: 59.8050 ms relative to baseline action latency 117.6975 ms. The outlined length is measured other latency plus baseline action latency, 161.0075 ms. All models and both methods in this benchmark use the same length scale within the SAG columns. Action latency reduction: 51%.">
+                        <span class="observation-other-segment" aria-hidden="true"></span>
+                        <span class="observation-action-fill" aria-hidden="true"></span>
+                        <span class="observation-action-saved" aria-hidden="true"><strong class="observation-action-reduction">−51%</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="observation-legend-row">
+              <p class="observation-legend"><span class="observation-legend-swatch" aria-hidden="true"></span><span>Visual processing + VAE encoding + other stages</span></p>
+              <p class="observation-legend observation-savings-legend"><span class="observation-savings-swatches" aria-hidden="true"><span class="observation-saved-key observation-saved-key-residual"></span><span class="observation-saved-key observation-saved-key-coupling"></span></span><span>Action time saved (vs. baseline action)</span><span class="observation-values-key">Values: action / overall latency (ms)</span></p>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section sampling-section" id="sampling" aria-labelledby="sampling-title">
+      <div class="container">
+        <p class="eyebrow section-index">§ 3 · Method</p>
+        <h2 id="sampling-title">Speculative Action Generation</h2>
+        <figure class="research-figure figure-wide method-overview-figure" id="method">
+          <a class="figure-zoom" href="static/images/overview.pdf" data-image="static/images/overview.svg" data-title="Overview of Speculative Action Generation" aria-label="Enlarge the SAG method overview">
+            <img src="static/images/overview.svg" width="2400" height="1265" loading="lazy" alt="Sequential action denoising compared with SAG-Residual and SAG-Coupling, showing draft generation, parallel verification, and correction.">
+          </a>
+          <figcaption>Overview of Speculative Action Generation.</figcaption>
+        </figure>
+        <ol class="method-steps" aria-label="SAG workflow">
+          <li>
+            <h3>Drafting</h3>
+            <p>Generate multiple draft states through simple mathematical computations using a reference from the action model.</p>
+          </li>
+          <li>
+            <h3>Parallel evaluation</h3>
+            <p>Obtain the velocity predictions needed for verification in one batched action DiT call.</p>
+          </li>
+          <li>
+            <h3>Verification and correction</h3>
+            <p>Accept drafts in order. At the first rejection, correct that draft, discard subsequent drafts, and restart drafting from the corrected state.</p>
+          </li>
+        </ol>
+        <details class="method-animations" id="method-animations">
+          <summary aria-controls="method-animations-content">
+            <span>Baseline and SAG animations</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path class="method-animations-plus" d="M12 5v14"/></svg>
+          </summary>
+          <div class="method-animations-body" id="method-animations-content">
+            <h3 id="baseline-animation-title">(a) Baseline Action Generation</h3>
+            <p class="section-lead">The baseline generates actions through sequential denoising, with each DiT call depending on the state produced by the preceding update. In this example, ten integration steps require ten DiT calls in total.</p>
+            <div class="sampling-player" id="sampling-player">
+              <span id="sampling-stage" hidden>DiT call 1 / 10</span>
+              <div class="sampling-window" role="region" aria-label="Moving view of the ten-step integration chain">
+                <div class="sampling-focus-heading" id="sampling-focus-heading" hidden>
+                  <span class="sampling-focus-title" id="sampling-focus-title">Denoising step 1</span>
+                </div>
+                <div id="sampling-diagram" class="baseline-diagram"><a href="static/images/baseline-integration.svg"><img src="static/images/baseline-integration.svg" width="3540" height="240" alt="A single horizontal chain: x0, action DiT, x1, action DiT, continuing to x10. Each intermediate state appears once."></a></div>
+              </div>
+              <div class="sampling-latency" id="sampling-latency" hidden>
+                <div class="sampling-latency-heading"><span>Latency</span><output id="sampling-latency-total" aria-label="0 times the latency of one DiT call"></output></div>
+                <svg id="sampling-latency-chart" role="img" aria-label="Schematic cumulative DiT latency: no calls completed"></svg>
+              </div>
+              <div class="sampling-transport" id="sampling-transport" role="group" aria-label="Baseline animation playback" hidden>
+                <div class="sampling-controls">
+                  <button type="button" id="sampling-play" data-playing="true" aria-label="Pause integration animation" title="Pause" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sampling-icon-play" d="M8 5l11 7-11 7z"/><path class="sampling-icon-pause" d="M8 5v14M16 5v14"/></svg>
+                  </button>
+                  <button type="button" id="sampling-replay" aria-label="Replay integration animation" title="Replay" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.9 7M3 4v7h7"/></svg>
+                  </button>
+                </div>
+                <input class="sampling-seek" id="sampling-seek" type="range" min="0" max="61300" step="100" value="0" aria-label="Seek baseline animation" disabled>
+              </div>
+              <noscript><p><a href="static/images/baseline-integration.svg">View the complete static sequence.</a> Enable JavaScript to follow the moving chain.</p></noscript>
+            </div>
+            <div class="sag-animation" id="sag-sampling">
+              <div class="sag-animation-title"><h3>(b) Speculative Action Generation</h3></div>
+              <p class="section-lead">SAG generates draft states at low computational cost and verifies them in one batched DiT call, enabling multiple integration steps per call. In this example, ten integration steps require four DiT calls in total. <span id="sag-latency-notation"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="inline-math" role="img" aria-label="T, subscript DiT" data-latex="T_{\mathrm{DiT}}" viewBox="0 -6.640139 18.143253 8.673743" style="width:1.821129em;height:0.870627em;vertical-align:-0.204123em"><title>T_{\mathrm{DiT}}</title><defs><path id="latency-dit-g1-1846" d="M2.899284 0H.8513L.90481-.238364Q1.099393-.267551 1.19182-.316197T1.352351-.466999Q1.425319-.569155 1.493423-.78806Q1.566392-1.006966 1.663683-1.449642L2.704701-6.212056H2.086901Q1.785297-6.212056 1.605308-6.124494T1.24533-5.798568T.807519-5.000778H.34052L.705363-6.640139H5.783974L5.404538-4.92781H4.937539Q4.937539-5.399673 4.913216-5.633172Q4.888893-5.871536 4.820789-5.993151Q4.752685-6.11963 4.650529-6.163411Q4.553238-6.212056 4.30028-6.212056H3.580324L2.524712-1.41559Q2.480931-1.225872 2.461473-1.113987Q2.446879-1.002101 2.432285-.875623Q2.422556-.754008 2.422556-.656717Q2.422556-.505915 2.471202-.418353Q2.519847-.335655 2.617139-.296739T2.952794-.238364L2.899284 0Z"/><path id="latency-dit-g0-39" d="M.12429 0V-.131392H.305398Q.610796-.131392 .738637-.326705Q.816762-.443892 .816762-.852273V-3.96307Q.816762-4.414064 .71733-4.527701Q.578835-4.683951 .305398-4.683951H.12429V-4.815343H2.084518Q3.164064-4.815343 3.725144-4.570314Q4.289775-4.325286 4.630684-3.753553Q4.975144-3.18182 4.975144-2.432529Q4.975144-1.427557 4.364348-.752841Q3.678979 0 2.276279 0H.12429ZM1.49858-.348012Q1.949575-.24858 2.254973-.24858Q3.078837-.24858 3.622161-.827415T4.165485-2.397018Q4.165485-3.394888 3.622161-3.970172T2.226563-4.545456Q1.906961-4.545456 1.49858-4.442473V-.348012Z"/><path id="latency-dit-g0-55" d="M4.208098-4.815343L4.261365-3.686081H4.126422Q4.08736-3.984377 4.019888-4.112218Q3.909803-4.318184 3.725144-4.414064Q3.544036-4.513496 3.24574-4.513496H2.567473V-.834517Q2.567473-.390625 2.663353-.28054Q2.798297-.131392 3.078837-.131392H3.24574V0H1.203836V-.131392H1.37429Q1.679688-.131392 1.807529-.316051Q1.885654-.429688 1.885654-.834517V-4.513496H1.306819Q.969461-4.513496 .827415-4.46378Q.642756-4.396309 .511364-4.204547T.355114-3.686081H.220171L.276989-4.815343H4.208098Z"/><path id="latency-dit-g0-76" d="M1.054688-5.049718Q1.203836-5.049718 1.306819-4.943184Q1.413353-4.840201 1.413353-4.691053T1.306819-4.435371Q1.203836-4.328837 1.054688-4.328837T.799006-4.435371T.692472-4.691053T.795455-4.943184Q.901989-5.049718 1.054688-5.049718ZM1.349432-3.348723V-.735086Q1.349432-.429688 1.392046-.326705Q1.438211-.227273 1.523438-.177557Q1.612217-.127841 1.843041-.127841V0H.262784V-.127841Q.50071-.127841 .582387-.174006T.710228-.326705Q.759943-.433239 .759943-.735086V-1.988637Q.759943-2.517757 .727983-2.674007Q.703125-2.787643 .649858-2.830257Q.596591-2.876422 .504262-2.876422Q.40483-2.876422 .262784-2.823155L.213068-2.950996L1.193182-3.348723H1.349432Z"/></defs><g transform="translate(-61.768369,-62.764633)" fill="currentColor"><use x="61.768369" y="62.764633" xlink:href="#latency-dit-g1-1846"/><use x="67.69828" y="64.798236" xlink:href="#latency-dit-g0-39"/><use x="72.95042" y="64.798236" xlink:href="#latency-dit-g0-76"/><use x="74.97101" y="64.798236" xlink:href="#latency-dit-g0-55"/></g></svg> and <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="inline-math" role="img" aria-label="T, subscript batch" data-latex="T_{\mathrm{batch}}" viewBox="0 -6.640139 22.177335 8.773181" style="width:2.226050em;height:0.880608em;vertical-align:-0.214104em"><title>T_{\mathrm{batch}}</title><defs><path id="latency-batch-g1-1846" d="M2.899284 0H.8513L.90481-.238364Q1.099393-.267551 1.19182-.316197T1.352351-.466999Q1.425319-.569155 1.493423-.78806Q1.566392-1.006966 1.663683-1.449642L2.704701-6.212056H2.086901Q1.785297-6.212056 1.605308-6.124494T1.24533-5.798568T.807519-5.000778H.34052L.705363-6.640139H5.783974L5.404538-4.92781H4.937539Q4.937539-5.399673 4.913216-5.633172Q4.888893-5.871536 4.820789-5.993151Q4.752685-6.11963 4.650529-6.163411Q4.553238-6.212056 4.30028-6.212056H3.580324L2.524712-1.41559Q2.480931-1.225872 2.461473-1.113987Q2.446879-1.002101 2.432285-.875623Q2.422556-.754008 2.422556-.656717Q2.422556-.505915 2.471202-.418353Q2.519847-.335655 2.617139-.296739T2.952794-.238364L2.899284 0Z"/><path id="latency-batch-g0-68" d="M2.070313-.46875Q1.569603-.081676 1.441762-.021307Q1.250001 .067472 1.033381 .067472Q.696023 .067472 .475852-.163352Q.259233-.394176 .259233-.770597Q.259233-1.008523 .365767-1.182529Q.511364-1.424006 .870029-1.637075Q1.232245-1.850143 2.070313-2.155541V-2.283382Q2.070313-2.769888 1.914063-2.950996Q1.761364-3.132104 1.46662-3.132104Q1.242898-3.132104 1.111506-3.011365Q.976563-2.890626 .976563-2.734376L.983665-2.52841Q.983665-2.365058 .898438-2.276279Q.816762-2.187501 .681818-2.187501Q.550426-2.187501 .465199-2.27983Q.383523-2.37216 .383523-2.531961Q.383523-2.837359 .696023-3.093041T1.573154-3.348723Q2.006393-3.348723 2.283382-3.203126Q2.492899-3.093041 2.592331-2.858666Q2.656251-2.705967 2.656251-2.233666V-1.129262Q2.656251-.664063 2.674007-.557529Q2.691762-.454546 2.730825-.419034Q2.773439-.383523 2.826706-.383523Q2.883524-.383523 2.926138-.408381Q3.000711-.454546 3.21378-.667614V-.46875Q2.816052 .06392 2.453836 .06392Q2.27983 .06392 2.176848-.056818T2.070313-.46875ZM2.070313-.699574V-1.938921Q1.534092-1.725853 1.377841-1.637075Q1.097302-1.480824 .976563-1.31037T.855824-.9375Q.855824-.681818 1.008523-.511364Q1.161222-.34446 1.360086-.34446Q1.629972-.34446 2.070313-.699574Z"/><path id="latency-batch-g0-69" d="M1.118608-2.691762Q1.59091-3.348723 2.137785-3.348723Q2.638495-3.348723 3.011365-2.919035Q3.384234-2.492899 3.384234-1.750711Q3.384234-.884233 2.80895-.355114Q2.315342 .099432 1.708097 .099432Q1.424006 .099432 1.129262-.003551Q.838069-.106534 .532671-.3125V-3.68253Q.532671-4.236507 .504262-4.364348Q.479404-4.492189 .422585-4.538354T.28054-4.584519Q.181108-4.584519 .03196-4.527701L-.017756-4.651991L.958807-5.049718H1.118608V-2.691762ZM1.118608-2.46449V-.518466Q1.299716-.340909 1.491478-.24858Q1.68679-.159801 1.889205-.159801Q2.212359-.159801 2.489348-.514915Q2.769888-.870029 2.769888-1.548296Q2.769888-2.173296 2.489348-2.507103Q2.212359-2.844461 1.857245-2.844461Q1.669035-2.844461 1.480824-2.748581Q1.338779-2.677558 1.118608-2.46449Z"/><path id="latency-batch-g0-70" d="M2.990058-1.235796Q2.858666-.59304 2.475143-.245029Q2.09162 .099432 1.626421 .099432Q1.072444 .099432 .660512-.365767T.24858-1.62287Q.24858-2.389916 .703125-2.869319Q1.161222-3.348723 1.800427-3.348723Q2.27983-3.348723 2.588779-3.093041Q2.897728-2.84091 2.897728-2.567473Q2.897728-2.432529 2.80895-2.347302Q2.723723-2.265626 2.567473-2.265626Q2.357956-2.265626 2.251421-2.400569Q2.191052-2.475143 2.169745-2.68466Q2.15199-2.894177 2.0277-3.004263Q1.90341-3.110797 1.683239-3.110797Q1.328126-3.110797 1.111506-2.848013Q.823864-2.500001 .823864-1.928268Q.823864-1.345881 1.107955-.898438Q1.395597-.454546 1.882103-.454546Q2.230115-.454546 2.507103-.692472Q2.702416-.855824 2.887075-1.285512L2.990058-1.235796Z"/><path id="latency-batch-g0-75" d="M1.182529-5.049718V-2.670456Q1.576705-3.103694 1.807529-3.224433Q2.038353-3.348723 2.269177-3.348723Q2.546166-3.348723 2.74503-3.196024T3.039774-2.71662Q3.107246-2.489348 3.107246-1.885654V-.735086Q3.107246-.426137 3.156962-.3125Q3.192473-.227273 3.2777-.177557T3.5902-.127841V0H1.992188V-.127841H2.066762Q2.294035-.127841 2.382813-.195313Q2.471592-.266335 2.507103-.401279Q2.517757-.458097 2.517757-.735086V-1.885654Q2.517757-2.418325 2.460939-2.585228Q2.407671-2.752132 2.286933-2.833808Q2.166194-2.919035 1.995739-2.919035Q1.821734-2.919035 1.633523-2.826706T1.182529-2.453836V-.735086Q1.182529-.401279 1.21804-.319602Q1.257103-.237926 1.356535-.181108Q1.459518-.127841 1.708097-.127841V0H.095881V-.127841Q.3125-.127841 .43679-.195313Q.507813-.230824 .550426-.330256T.59304-.735086V-3.678979Q.59304-4.236507 .564631-4.364348Q.539773-4.492189 .482955-4.538354Q.429688-4.584519 .337358-4.584519Q.262784-4.584519 .095881-4.527701L.046165-4.651991L1.019177-5.049718H1.182529Z"/><path id="latency-batch-g0-87" d="M1.171875-4.321735V-3.252842H1.931819V-3.004263H1.171875V-.894887Q1.171875-.578835 1.260654-.46875Q1.352984-.358665 1.495029-.358665Q1.612217-.358665 1.722302-.429688Q1.832387-.504262 1.892756-.646307H2.031251Q1.906961-.298296 1.679688-.120739Q1.452415 .053267 1.210938 .053267Q1.047586 .053267 .891336-.035511Q.735086-.127841 .660512-.294744Q.585938-.465199 .585938-.816762V-3.004263H.071023V-3.12145Q.266335-3.199575 .46875-3.384234Q.674716-3.572445 .834517-3.828127Q.916194-3.96307 1.06179-4.321735H1.171875Z"/></defs><g transform="translate(-61.768369,-62.764633)" fill="currentColor"><use x="61.768369" y="62.764633" xlink:href="#latency-batch-g1-1846"/><use x="67.69828" y="64.798236" xlink:href="#latency-batch-g0-69"/><use x="71.334653" y="64.798236" xlink:href="#latency-batch-g0-68"/><use x="74.56263" y="64.798236" xlink:href="#latency-batch-g0-87"/><use x="76.58322" y="64.798236" xlink:href="#latency-batch-g0-70"/><use x="79.811197" y="64.798236" xlink:href="#latency-batch-g0-75"/></g></svg> denote single-state and batched DiT call latencies, respectively, with <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="inline-math" role="img" aria-label="T batch is approximately equal to T DiT" data-latex="T_{\mathrm{batch}}\approx T_{\mathrm{DiT}}" viewBox="0 -6.640139 53.186770 8.773181" style="width:5.338622em;height:0.880608em;vertical-align:-0.214104em"><title>T_{\mathrm{batch}}\approx T_{\mathrm{DiT}}</title><defs><path id="latency-approx-g1-1846" d="M2.899284 0H.8513L.90481-.238364Q1.099393-.267551 1.19182-.316197T1.352351-.466999Q1.425319-.569155 1.493423-.78806Q1.566392-1.006966 1.663683-1.449642L2.704701-6.212056H2.086901Q1.785297-6.212056 1.605308-6.124494T1.24533-5.798568T.807519-5.000778H.34052L.705363-6.640139H5.783974L5.404538-4.92781H4.937539Q4.937539-5.399673 4.913216-5.633172Q4.888893-5.871536 4.820789-5.993151Q4.752685-6.11963 4.650529-6.163411Q4.553238-6.212056 4.30028-6.212056H3.580324L2.524712-1.41559Q2.480931-1.225872 2.461473-1.113987Q2.446879-1.002101 2.432285-.875623Q2.422556-.754008 2.422556-.656717Q2.422556-.505915 2.471202-.418353Q2.519847-.335655 2.617139-.296739T2.952794-.238364L2.899284 0Z"/><path id="latency-approx-g1-3406" d="M.724821-1.376673Q.972914-1.950693 1.381538-2.330129Q1.790162-2.71443 2.349587-2.71443Q2.933336-2.71443 3.740855-2.20365T4.966726-1.69287Q5.380215-1.69287 5.657495-1.911776T6.216921-2.592816L6.606087-2.330129Q6.39691-1.897182 5.944505-1.454507Q5.4921-1.016695 4.845112-1.016695Q4.222447-1.016695 3.419793-1.527475Q2.622003-2.038255 2.198786-2.038255Q1.843672-2.038255 1.576121-1.814485T1.104257-1.162632L.724821-1.376673ZM.724821-3.307908Q.972914-3.881927 1.381538-4.261364Q1.790162-4.645665 2.349587-4.645665Q2.933336-4.645665 3.740855-4.134885T4.966726-3.624105Q5.380215-3.624105 5.657495-3.843011T6.216921-4.52405L6.606087-4.261364Q6.39691-3.828417 5.944505-3.385741Q5.4921-2.94793 4.845112-2.94793Q4.222447-2.94793 3.419793-3.45871Q2.622003-3.969489 2.198786-3.969489Q1.843672-3.969489 1.576121-3.745719T1.104257-3.093867L.724821-3.307908Z"/><path id="latency-approx-g0-39" d="M.12429 0V-.131392H.305398Q.610796-.131392 .738637-.326705Q.816762-.443892 .816762-.852273V-3.96307Q.816762-4.414064 .71733-4.527701Q.578835-4.683951 .305398-4.683951H.12429V-4.815343H2.084518Q3.164064-4.815343 3.725144-4.570314Q4.289775-4.325286 4.630684-3.753553Q4.975144-3.18182 4.975144-2.432529Q4.975144-1.427557 4.364348-.752841Q3.678979 0 2.276279 0H.12429ZM1.49858-.348012Q1.949575-.24858 2.254973-.24858Q3.078837-.24858 3.622161-.827415T4.165485-2.397018Q4.165485-3.394888 3.622161-3.970172T2.226563-4.545456Q1.906961-4.545456 1.49858-4.442473V-.348012Z"/><path id="latency-approx-g0-55" d="M4.208098-4.815343L4.261365-3.686081H4.126422Q4.08736-3.984377 4.019888-4.112218Q3.909803-4.318184 3.725144-4.414064Q3.544036-4.513496 3.24574-4.513496H2.567473V-.834517Q2.567473-.390625 2.663353-.28054Q2.798297-.131392 3.078837-.131392H3.24574V0H1.203836V-.131392H1.37429Q1.679688-.131392 1.807529-.316051Q1.885654-.429688 1.885654-.834517V-4.513496H1.306819Q.969461-4.513496 .827415-4.46378Q.642756-4.396309 .511364-4.204547T.355114-3.686081H.220171L.276989-4.815343H4.208098Z"/><path id="latency-approx-g0-68" d="M2.070313-.46875Q1.569603-.081676 1.441762-.021307Q1.250001 .067472 1.033381 .067472Q.696023 .067472 .475852-.163352Q.259233-.394176 .259233-.770597Q.259233-1.008523 .365767-1.182529Q.511364-1.424006 .870029-1.637075Q1.232245-1.850143 2.070313-2.155541V-2.283382Q2.070313-2.769888 1.914063-2.950996Q1.761364-3.132104 1.46662-3.132104Q1.242898-3.132104 1.111506-3.011365Q.976563-2.890626 .976563-2.734376L.983665-2.52841Q.983665-2.365058 .898438-2.276279Q.816762-2.187501 .681818-2.187501Q.550426-2.187501 .465199-2.27983Q.383523-2.37216 .383523-2.531961Q.383523-2.837359 .696023-3.093041T1.573154-3.348723Q2.006393-3.348723 2.283382-3.203126Q2.492899-3.093041 2.592331-2.858666Q2.656251-2.705967 2.656251-2.233666V-1.129262Q2.656251-.664063 2.674007-.557529Q2.691762-.454546 2.730825-.419034Q2.773439-.383523 2.826706-.383523Q2.883524-.383523 2.926138-.408381Q3.000711-.454546 3.21378-.667614V-.46875Q2.816052 .06392 2.453836 .06392Q2.27983 .06392 2.176848-.056818T2.070313-.46875ZM2.070313-.699574V-1.938921Q1.534092-1.725853 1.377841-1.637075Q1.097302-1.480824 .976563-1.31037T.855824-.9375Q.855824-.681818 1.008523-.511364Q1.161222-.34446 1.360086-.34446Q1.629972-.34446 2.070313-.699574Z"/><path id="latency-approx-g0-69" d="M1.118608-2.691762Q1.59091-3.348723 2.137785-3.348723Q2.638495-3.348723 3.011365-2.919035Q3.384234-2.492899 3.384234-1.750711Q3.384234-.884233 2.80895-.355114Q2.315342 .099432 1.708097 .099432Q1.424006 .099432 1.129262-.003551Q.838069-.106534 .532671-.3125V-3.68253Q.532671-4.236507 .504262-4.364348Q.479404-4.492189 .422585-4.538354T.28054-4.584519Q.181108-4.584519 .03196-4.527701L-.017756-4.651991L.958807-5.049718H1.118608V-2.691762ZM1.118608-2.46449V-.518466Q1.299716-.340909 1.491478-.24858Q1.68679-.159801 1.889205-.159801Q2.212359-.159801 2.489348-.514915Q2.769888-.870029 2.769888-1.548296Q2.769888-2.173296 2.489348-2.507103Q2.212359-2.844461 1.857245-2.844461Q1.669035-2.844461 1.480824-2.748581Q1.338779-2.677558 1.118608-2.46449Z"/><path id="latency-approx-g0-70" d="M2.990058-1.235796Q2.858666-.59304 2.475143-.245029Q2.09162 .099432 1.626421 .099432Q1.072444 .099432 .660512-.365767T.24858-1.62287Q.24858-2.389916 .703125-2.869319Q1.161222-3.348723 1.800427-3.348723Q2.27983-3.348723 2.588779-3.093041Q2.897728-2.84091 2.897728-2.567473Q2.897728-2.432529 2.80895-2.347302Q2.723723-2.265626 2.567473-2.265626Q2.357956-2.265626 2.251421-2.400569Q2.191052-2.475143 2.169745-2.68466Q2.15199-2.894177 2.0277-3.004263Q1.90341-3.110797 1.683239-3.110797Q1.328126-3.110797 1.111506-2.848013Q.823864-2.500001 .823864-1.928268Q.823864-1.345881 1.107955-.898438Q1.395597-.454546 1.882103-.454546Q2.230115-.454546 2.507103-.692472Q2.702416-.855824 2.887075-1.285512L2.990058-1.235796Z"/><path id="latency-approx-g0-75" d="M1.182529-5.049718V-2.670456Q1.576705-3.103694 1.807529-3.224433Q2.038353-3.348723 2.269177-3.348723Q2.546166-3.348723 2.74503-3.196024T3.039774-2.71662Q3.107246-2.489348 3.107246-1.885654V-.735086Q3.107246-.426137 3.156962-.3125Q3.192473-.227273 3.2777-.177557T3.5902-.127841V0H1.992188V-.127841H2.066762Q2.294035-.127841 2.382813-.195313Q2.471592-.266335 2.507103-.401279Q2.517757-.458097 2.517757-.735086V-1.885654Q2.517757-2.418325 2.460939-2.585228Q2.407671-2.752132 2.286933-2.833808Q2.166194-2.919035 1.995739-2.919035Q1.821734-2.919035 1.633523-2.826706T1.182529-2.453836V-.735086Q1.182529-.401279 1.21804-.319602Q1.257103-.237926 1.356535-.181108Q1.459518-.127841 1.708097-.127841V0H.095881V-.127841Q.3125-.127841 .43679-.195313Q.507813-.230824 .550426-.330256T.59304-.735086V-3.678979Q.59304-4.236507 .564631-4.364348Q.539773-4.492189 .482955-4.538354Q.429688-4.584519 .337358-4.584519Q.262784-4.584519 .095881-4.527701L.046165-4.651991L1.019177-5.049718H1.182529Z"/><path id="latency-approx-g0-76" d="M1.054688-5.049718Q1.203836-5.049718 1.306819-4.943184Q1.413353-4.840201 1.413353-4.691053T1.306819-4.435371Q1.203836-4.328837 1.054688-4.328837T.799006-4.435371T.692472-4.691053T.795455-4.943184Q.901989-5.049718 1.054688-5.049718ZM1.349432-3.348723V-.735086Q1.349432-.429688 1.392046-.326705Q1.438211-.227273 1.523438-.177557Q1.612217-.127841 1.843041-.127841V0H.262784V-.127841Q.50071-.127841 .582387-.174006T.710228-.326705Q.759943-.433239 .759943-.735086V-1.988637Q.759943-2.517757 .727983-2.674007Q.703125-2.787643 .649858-2.830257Q.596591-2.876422 .504262-2.876422Q.40483-2.876422 .262784-2.823155L.213068-2.950996L1.193182-3.348723H1.349432Z"/><path id="latency-approx-g0-87" d="M1.171875-4.321735V-3.252842H1.931819V-3.004263H1.171875V-.894887Q1.171875-.578835 1.260654-.46875Q1.352984-.358665 1.495029-.358665Q1.612217-.358665 1.722302-.429688Q1.832387-.504262 1.892756-.646307H2.031251Q1.906961-.298296 1.679688-.120739Q1.452415 .053267 1.210938 .053267Q1.047586 .053267 .891336-.035511Q.735086-.127841 .660512-.294744Q.585938-.465199 .585938-.816762V-3.004263H.071023V-3.12145Q.266335-3.199575 .46875-3.384234Q.674716-3.572445 .834517-3.828127Q.916194-3.96307 1.06179-4.321735H1.171875Z"/></defs><g transform="translate(-61.768369,-62.764633)" fill="currentColor"><use x="61.768369" y="62.764633" xlink:href="#latency-approx-g1-1846"/><use x="67.69828" y="64.798236" xlink:href="#latency-approx-g0-69"/><use x="71.334653" y="64.798236" xlink:href="#latency-approx-g0-68"/><use x="74.56263" y="64.798236" xlink:href="#latency-approx-g0-87"/><use x="76.58322" y="64.798236" xlink:href="#latency-approx-g0-70"/><use x="79.811197" y="64.798236" xlink:href="#latency-approx-g0-75"/><use x="86.713338" y="62.764633" xlink:href="#latency-approx-g1-3406"/><use x="96.811882" y="62.764633" xlink:href="#latency-approx-g1-1846"/><use x="102.741793" y="64.798236" xlink:href="#latency-approx-g0-39"/><use x="107.993933" y="64.798236" xlink:href="#latency-approx-g0-76"/><use x="110.014524" y="64.798236" xlink:href="#latency-approx-g0-55"/></g></svg>.</span></p>
+              <div class="sampling-player sag-player" id="sag-player" data-view="process">
+                <div class="sag-process-viewport" role="region" aria-label="SAG process diagram">
+                <div class="sag-views">
+                  <div class="sag-playback-heading" id="sag-playback-heading" hidden>
+                    <span class="sampling-focus-title" id="sag-phase-title">Drafting</span>
+                  </div>
+                  <div class="sag-phase-note" id="sag-phase-note" hidden><strong>Only at x₀</strong><span class="sag-initial-call">1 extra DiT call</span></div>
+                  <div class="sag-action-caption sampling-focus-title" id="sag-action-caption" hidden></div>
+                  <div class="sag-diagram" id="sag-diagram" role="region" aria-label="SAG sampling process" tabindex="0"><img src="static/images/speculative-integration.svg" alt="SAG drafts several states, obtains velocities in one batched DiT call, then verifies and corrects the drafts. Hatched drafts are distinct from solid verification nodes."></div>
+                </div>
+                </div>
+                <div class="sampling-latency" id="sag-call-ledger" hidden>
+                  <div class="sampling-latency-heading"><span>Latency</span><output id="sag-call-total" aria-label="No DiT calls completed"></output></div>
+                  <svg id="sag-call-chart" role="img" aria-label="Schematic cumulative DiT latency: no calls completed"></svg>
+                </div>
+                <div class="sampling-transport" id="sag-transport" role="group" aria-label="SAG animation playback" hidden>
+                  <div class="sampling-controls">
+                    <button type="button" id="sag-play" data-playing="true" aria-label="Pause SAG animation" title="Pause" disabled>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sampling-icon-play" d="M8 5l11 7-11 7z"/><path class="sampling-icon-pause" d="M8 5v14M16 5v14"/></svg>
+                    </button>
+                    <button type="button" id="sag-replay" aria-label="Replay SAG animation" title="Replay" disabled>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.9 7M3 4v7h7"/></svg>
+                    </button>
+                  </div>
+                  <input class="sampling-seek" id="sag-seek" type="range" min="0" max="66840" step="100" value="0" aria-label="Seek SAG animation" disabled>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="section section-tint sag-algorithms-section" id="sag-algorithms" aria-labelledby="sag-algorithms-title">
+      <div class="container">
+        <p class="eyebrow section-index">§ 4 · Algorithms</p>
+        <h2 id="sag-algorithms-title">Two Alternative Algorithms</h2>
+        <div class="sampling-player sag-player sag-variants-player" id="sag-variants-player" data-view="residual">
+            <div class="sag-view-tabs" id="sag-view-tabs" role="tablist" aria-label="SAG algorithm" hidden>
+              <button type="button" role="tab" id="sag-tab-residual" data-sag-view="residual" aria-selected="true" aria-controls="sag-panel-residual" tabindex="0">SAG-Residual</button>
+              <button type="button" role="tab" id="sag-tab-coupling" data-sag-view="coupling" aria-selected="false" aria-controls="sag-panel-coupling" tabindex="-1">SAG-Coupling</button>
+            </div>
+            <div class="sag-animation-card">
+            <nav class="sag-stage-nav" id="sag-stage-nav" aria-label="Jump to an animation stage" hidden></nav>
+            <div class="sag-views">
+              <div class="sag-phase-note" id="sag-variant-phase-note" hidden><strong>Only at x₀</strong><span class="sag-initial-call">1 extra DiT call</span></div>
+              <div class="sag-action-caption sampling-focus-title" id="sag-variant-action-caption" hidden></div>
+              <div class="sag-details" id="sag-details">
+                <article class="sag-detail" id="sag-panel-residual" data-route="residual" role="tabpanel" aria-labelledby="sag-tab-residual" tabindex="0">
+                  <div class="sag-detail-diagram"><img src="static/images/sampling-residual-detail.svg" alt="Four drafts are computed together from the current state and a shared reference velocity."></div>
+                  <div class="sag-detail-formula" aria-label="Equations for the illustrated window"><img src="static/images/detail-residual-draft.svg" alt="The reference velocity and the four explicit draft equations for states 1 through 4."></div>
+                </article>
+                <article class="sag-detail" id="sag-panel-coupling" data-route="coupling" role="tabpanel" aria-labelledby="sag-tab-coupling" tabindex="0" hidden>
+                  <div class="sag-detail-diagram"><img src="static/images/sampling-coupling-detail.svg" alt="Four drafts reuse the clean action reference and receive fresh Gaussian noise at each step."></div>
+                  <div class="sag-detail-formula" aria-label="Equations for the illustrated window"><img src="static/images/detail-coupling-draft.svg" alt="The clean action reference and four explicit stochastic draft updates for states 1 through 4."></div>
+                </article>
+              </div>
+            </div>
+            <div class="sampling-transport" id="sag-variant-transport" role="group" aria-label="SAG algorithm animation playback" hidden>
+              <div class="sampling-controls">
+                <button type="button" id="sag-variant-play" data-playing="true" aria-label="Pause SAG algorithm animation" title="Pause" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sampling-icon-play" d="M8 5l11 7-11 7z"/><path class="sampling-icon-pause" d="M8 5v14M16 5v14"/></svg>
+                </button>
+                <button type="button" id="sag-variant-replay" aria-label="Replay SAG algorithm animation" title="Replay" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.9 7M3 4v7h7"/></svg>
+                </button>
+              </div>
+              <input class="sampling-seek" id="sag-variant-seek" type="range" min="0" max="41200" step="100" value="0" aria-label="Seek SAG algorithm animation" disabled>
+            </div>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section results-section" id="results" aria-labelledby="results-title">
+      <div class="container">
+        <p class="eyebrow section-index">§ 5 · Results</p>
+        <h2 id="results-title">Simulation Experiments</h2>
+        <div class="paper-results" id="result-simulation">
+<div class="simulation-tabs result-tabs" role="tablist" aria-label="Simulation benchmark">
+<button type="button" role="tab" id="benchmark-tab-libero" aria-controls="benchmark-panel-libero" aria-selected="true" tabindex="0">LIBERO</button>
+<button type="button" role="tab" id="benchmark-tab-libero-plus" aria-controls="benchmark-panel-libero-plus" aria-selected="false" tabindex="-1">LIBERO-Plus</button>
+<button type="button" role="tab" id="benchmark-tab-robotwin" aria-controls="benchmark-panel-robotwin" aria-selected="false" tabindex="-1">RoboTwin 2.0</button>
+</div>
+<div class="paper-benchmark-panel" id="benchmark-panel-libero" role="tabpanel" aria-labelledby="benchmark-tab-libero" >
+<figure class="paper-results-block" id="results-libero">
+<figcaption id="caption-libero">Results on LIBERO</figcaption>
+<div class="paper-table-scroll" role="region" aria-labelledby="caption-libero" tabindex="0">
+<table class="paper-results-table paper-table-libero" aria-labelledby="caption-libero">
+<colgroup><col class="paper-method-column"><col span="9"></colgroup>
+<thead><tr><th aria-hidden="true"></th>
+<th colspan="5" scope="colgroup">Success rate (%) <span class="paper-metric-direction">↑</span></th>
+<th colspan="2" scope="colgroup">Action latency</th><th colspan="2" scope="colgroup">Overall latency</th>
+</tr><tr><th scope="col">Method</th>
+<th scope="col">Spatial</th><th scope="col">Object</th><th scope="col">Goal</th><th scope="col">Long</th><th scope="col">Avg.</th>
+<th scope="col">ms <span class="paper-metric-direction">↓</span></th><th scope="col">Speedup <span class="paper-metric-direction">↑</span></th><th scope="col">ms <span class="paper-metric-direction">↓</span></th><th scope="col">Speedup <span class="paper-metric-direction">↑</span></th>
+</tr></thead>
+<tbody>
+<tr data-result-method="baseline" data-model="pi05"><th scope="row"><math class="paper-model-math" aria-label="pi 0.5"><msub><mi>π</mi><mn>0.5</mn></msub></math></th>
+<td>98.2</td>
+<td>98.6</td>
+<td>97.2</td>
+<td>92.4</td>
+<td><span class="paper-second">96.60</span></td>
+<td>140.04</td>
+<td>1.00×</td>
+<td>175.18</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="pi05"><th scope="row">+ SAG-Residual</th>
+<td>99.2</td>
+<td>98.0</td>
+<td>97.0</td>
+<td>92.2</td>
+<td><span class="paper-second">96.60</span></td>
+<td>63.34</td>
+<td><strong>2.21×</strong></td>
+<td>98.86</td>
+<td><strong>1.77×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="pi05"><th scope="row">+ SAG-Coupling</th>
+<td>98.6</td>
+<td>97.8</td>
+<td>96.8</td>
+<td>94.6</td>
+<td><strong>96.95</strong></td>
+<td>94.40</td>
+<td><span class="paper-second">1.48×</span></td>
+<td>129.72</td>
+<td><span class="paper-second">1.35×</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="baseline" data-model="fast-wam"><th scope="row">Fast-WAM</th>
+<td>97.2</td>
+<td>99.6</td>
+<td>95.4</td>
+<td>94.6</td>
+<td>96.70</td>
+<td>282.88</td>
+<td>1.00×</td>
+<td>317.36</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="fast-wam"><th scope="row">+ SAG-Residual</th>
+<td>97.8</td>
+<td>99.8</td>
+<td>96.0</td>
+<td>94.6</td>
+<td><strong>97.05</strong></td>
+<td>127.17</td>
+<td><strong>2.22×</strong></td>
+<td>165.13</td>
+<td><strong>1.92×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="fast-wam"><th scope="row">+ SAG-Coupling</th>
+<td>97.6</td>
+<td>99.4</td>
+<td>96.2</td>
+<td>94.2</td>
+<td><span class="paper-second">96.85</span></td>
+<td>139.85</td>
+<td><span class="paper-second">2.02×</span></td>
+<td>175.60</td>
+<td><span class="paper-second">1.81×</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="baseline" data-model="faster-wam"><th scope="row">Faster-WAM</th>
+<td>99.4</td>
+<td>99.6</td>
+<td>98.2</td>
+<td>98.2</td>
+<td><span class="paper-second">98.85</span></td>
+<td>204.88</td>
+<td>1.00×</td>
+<td>251.44</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="faster-wam"><th scope="row">+ SAG-Residual</th>
+<td>99.0</td>
+<td>99.8</td>
+<td>98.0</td>
+<td>99.0</td>
+<td><strong>98.95</strong></td>
+<td>101.38</td>
+<td><strong>2.02×</strong></td>
+<td>148.11</td>
+<td><strong>1.70×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="faster-wam"><th scope="row">+ SAG-Coupling</th>
+<td>98.6</td>
+<td>99.8</td>
+<td>99.2</td>
+<td>97.8</td>
+<td><span class="paper-second">98.85</span></td>
+<td>108.56</td>
+<td><span class="paper-second">1.89×</span></td>
+<td>157.23</td>
+<td><span class="paper-second">1.60×</span></td>
+</tr>
+</tbody>
+</table></div></figure></div>
+<div class="paper-benchmark-panel" id="benchmark-panel-libero-plus" role="tabpanel" aria-labelledby="benchmark-tab-libero-plus" hidden>
+<figure class="paper-results-block" id="results-libero-plus">
+<figcaption id="caption-libero-plus">Results on LIBERO-Plus</figcaption>
+<div class="paper-table-scroll" role="region" aria-labelledby="caption-libero-plus" tabindex="0">
+<table class="paper-results-table paper-table-libero-plus" aria-labelledby="caption-libero-plus">
+<colgroup><col class="paper-method-column"><col span="12"></colgroup>
+<thead><tr><th aria-hidden="true"></th>
+<th colspan="8" scope="colgroup">Success rate (%) <span class="paper-metric-direction">↑</span></th>
+<th colspan="2" scope="colgroup">Action latency</th><th colspan="2" scope="colgroup">Overall latency</th>
+</tr><tr><th scope="col">Method</th>
+<th scope="col">Cam.</th><th scope="col">Robot</th><th scope="col">Lang.</th><th scope="col">Light</th><th scope="col">Backg.</th><th scope="col">Noise</th><th scope="col">Layout</th><th scope="col">Avg.</th>
+<th scope="col">ms <span class="paper-metric-direction">↓</span></th><th scope="col">Speedup <span class="paper-metric-direction">↑</span></th><th scope="col">ms <span class="paper-metric-direction">↓</span></th><th scope="col">Speedup <span class="paper-metric-direction">↑</span></th>
+</tr></thead>
+<tbody>
+<tr data-result-method="baseline" data-model="pi05"><th scope="row"><math class="paper-model-math" aria-label="pi 0.5"><msub><mi>π</mi><mn>0.5</mn></msub></math></th>
+<td>65.83</td>
+<td>82.32</td>
+<td>86.48</td>
+<td>96.30</td>
+<td>94.59</td>
+<td>84.05</td>
+<td>85.45</td>
+<td><span class="paper-second">84.13</span></td>
+<td>139.03</td>
+<td>1.00×</td>
+<td>174.41</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="pi05"><th scope="row">+ SAG-Residual</th>
+<td>68.75</td>
+<td>78.79</td>
+<td>86.48</td>
+<td>97.53</td>
+<td>98.38</td>
+<td>84.82</td>
+<td>85.45</td>
+<td><strong>84.86</strong></td>
+<td>59.72</td>
+<td><strong>2.33×</strong></td>
+<td>93.89</td>
+<td><strong>1.86×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="pi05"><th scope="row">+ SAG-Coupling</th>
+<td>65.83</td>
+<td>80.30</td>
+<td>87.70</td>
+<td>98.77</td>
+<td>94.05</td>
+<td>83.27</td>
+<td>85.45</td>
+<td><span class="paper-second">84.13</span></td>
+<td>82.47</td>
+<td><span class="paper-second">1.69×</span></td>
+<td>119.12</td>
+<td><span class="paper-second">1.46×</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="baseline" data-model="fast-wam"><th scope="row">Fast-WAM</th>
+<td>16.25</td>
+<td>41.92</td>
+<td>72.13</td>
+<td>84.57</td>
+<td>47.57</td>
+<td>33.07</td>
+<td>60.00</td>
+<td>49.14</td>
+<td>280.83</td>
+<td>1.00×</td>
+<td>315.14</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="fast-wam"><th scope="row">+ SAG-Residual</th>
+<td>17.08</td>
+<td>44.44</td>
+<td>72.95</td>
+<td>83.33</td>
+<td>48.11</td>
+<td>33.85</td>
+<td>58.64</td>
+<td><span class="paper-second">49.60</span></td>
+<td>126.90</td>
+<td><strong>2.21×</strong></td>
+<td>165.05</td>
+<td><strong>1.91×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="fast-wam"><th scope="row">+ SAG-Coupling</th>
+<td>17.08</td>
+<td>44.95</td>
+<td>73.77</td>
+<td>82.72</td>
+<td>46.49</td>
+<td>32.68</td>
+<td>62.73</td>
+<td><strong>49.93</strong></td>
+<td>141.20</td>
+<td><span class="paper-second">1.99×</span></td>
+<td>177.17</td>
+<td><span class="paper-second">1.78×</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="baseline" data-model="faster-wam"><th scope="row">Faster-WAM</th>
+<td>54.58</td>
+<td>68.69</td>
+<td>95.08</td>
+<td>95.68</td>
+<td>58.38</td>
+<td>63.81</td>
+<td>83.18</td>
+<td><strong>73.64</strong></td>
+<td>205.74</td>
+<td>1.00×</td>
+<td>260.53</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="faster-wam"><th scope="row">+ SAG-Residual</th>
+<td>54.17</td>
+<td>70.71</td>
+<td>95.49</td>
+<td>95.06</td>
+<td>58.38</td>
+<td>62.26</td>
+<td>80.45</td>
+<td>73.17</td>
+<td>118.57</td>
+<td><span class="paper-second">1.74×</span></td>
+<td>165.75</td>
+<td><span class="paper-second">1.57×</span></td>
+</tr>
+<tr data-result-method="coupling" data-model="faster-wam"><th scope="row">+ SAG-Coupling</th>
+<td>53.75</td>
+<td>69.19</td>
+<td>95.49</td>
+<td>94.44</td>
+<td>58.92</td>
+<td>63.81</td>
+<td>83.18</td>
+<td><span class="paper-second">73.57</span></td>
+<td>110.01</td>
+<td><strong>1.87×</strong></td>
+<td>159.50</td>
+<td><strong>1.63×</strong></td>
+</tr>
+</tbody>
+</table></div></figure></div>
+<div class="paper-benchmark-panel" id="benchmark-panel-robotwin" role="tabpanel" aria-labelledby="benchmark-tab-robotwin" hidden>
+<figure class="paper-results-block" id="results-robotwin">
+<figcaption id="caption-robotwin">Results on RoboTwin 2.0</figcaption>
+<div class="paper-table-scroll" role="region" aria-labelledby="caption-robotwin" tabindex="0">
+<table class="paper-results-table paper-table-robotwin" aria-labelledby="caption-robotwin">
+<colgroup><col class="paper-method-column"><col span="7"></colgroup>
+<thead><tr><th aria-hidden="true"></th>
+<th colspan="3" scope="colgroup">Success rate (%) <span class="paper-metric-direction">↑</span></th>
+<th colspan="2" scope="colgroup">Action latency</th><th colspan="2" scope="colgroup">Overall latency</th>
+</tr><tr><th scope="col">Method</th>
+<th scope="col">Clean</th><th scope="col">Randomized</th><th scope="col">Avg.</th>
+<th scope="col">ms <span class="paper-metric-direction">↓</span></th><th scope="col">Speedup <span class="paper-metric-direction">↑</span></th><th scope="col">ms <span class="paper-metric-direction">↓</span></th><th scope="col">Speedup <span class="paper-metric-direction">↑</span></th>
+</tr></thead>
+<tbody>
+<tr data-result-method="baseline" data-model="pi05"><th scope="row"><math class="paper-model-math" aria-label="pi 0.5"><msub><mi>π</mi><mn>0.5</mn></msub></math></th>
+<td>45.14</td>
+<td>47.86</td>
+<td><span class="paper-second">46.50</span></td>
+<td>186.14</td>
+<td>1.00×</td>
+<td>242.54</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="pi05"><th scope="row">+ SAG-Residual</th>
+<td>51.18</td>
+<td>56.22</td>
+<td><strong>53.70</strong></td>
+<td>65.16</td>
+<td><strong>2.86×</strong></td>
+<td>122.25</td>
+<td><strong>1.98×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="pi05"><th scope="row">+ SAG-Coupling</th>
+<td>44.30</td>
+<td>46.92</td>
+<td>45.61</td>
+<td>133.68</td>
+<td><span class="paper-second">1.39×</span></td>
+<td>190.23</td>
+<td><span class="paper-second">1.27×</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="baseline" data-model="fast-wam"><th scope="row">Fast-WAM</th>
+<td>90.84</td>
+<td>89.98</td>
+<td><strong>90.41</strong></td>
+<td>428.95</td>
+<td>1.00×</td>
+<td>481.69</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="fast-wam"><th scope="row">+ SAG-Residual</th>
+<td>90.76</td>
+<td>89.98</td>
+<td><span class="paper-second">90.37</span></td>
+<td>132.53</td>
+<td><strong>3.24×</strong></td>
+<td>185.47</td>
+<td><strong>2.60×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="fast-wam"><th scope="row">+ SAG-Coupling</th>
+<td>90.42</td>
+<td>89.08</td>
+<td>89.75</td>
+<td>201.13</td>
+<td><span class="paper-second">2.13×</span></td>
+<td>251.51</td>
+<td><span class="paper-second">1.92×</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="baseline" data-model="faster-wam"><th scope="row">Faster-WAM</th>
+<td>90.82</td>
+<td>90.88</td>
+<td><span class="paper-second">90.85</span></td>
+<td>286.41</td>
+<td>1.00×</td>
+<td>346.86</td>
+<td>1.00×</td>
+</tr>
+<tr data-result-method="residual" data-model="faster-wam"><th scope="row">+ SAG-Residual</th>
+<td>91.36</td>
+<td>91.22</td>
+<td><strong>91.29</strong></td>
+<td>87.52</td>
+<td><strong>3.27×</strong></td>
+<td>148.19</td>
+<td><strong>2.34×</strong></td>
+</tr>
+<tr data-result-method="coupling" data-model="faster-wam"><th scope="row">+ SAG-Coupling</th>
+<td>90.92</td>
+<td>90.40</td>
+<td>90.66</td>
+<td>120.37</td>
+<td><span class="paper-second">2.38×</span></td>
+<td>180.37</td>
+<td><span class="paper-second">1.92×</span></td>
+</tr>
+</tbody>
+</table></div></figure></div>
+<div class="paper-ablation-row">
+<figure class="paper-results-block" id="results-steps">
+<figcaption id="caption-steps">Effect of integration steps <span class="paper-table-units">LIBERO-Spatial · SR: success rate (%) · Action: latency (ms)</span></figcaption>
+<div class="paper-table-scroll" role="region" aria-labelledby="caption-steps" tabindex="0">
+<table class="paper-results-table paper-table-steps" aria-labelledby="caption-steps">
+<colgroup><col class="paper-method-column"><col class="paper-budget-column"><col span="6"></colgroup>
+<thead><tr><th colspan="2" aria-hidden="true"></th>
+<th colspan="2" scope="colgroup"><math class="paper-model-math" aria-label="pi 0.5"><msub><mi>π</mi><mn>0.5</mn></msub></math></th><th colspan="2" scope="colgroup">Fast-WAM</th><th colspan="2" scope="colgroup">Faster-WAM</th>
+</tr><tr><th scope="col">Method</th><th scope="col"><i>K</i></th>
+<th scope="col">SR</th><th scope="col">Action</th><th scope="col">SR</th><th scope="col">Action</th><th scope="col">SR</th><th scope="col">Action</th>
+</tr></thead>
+<tbody>
+<tr data-result-method="baseline">
+<th scope="rowgroup" rowspan="3">Serial Euler</th>
+<th scope="row" class="paper-budget">20</th>
+<td>99.0</td>
+<td>294.86</td>
+<td>97.2</td>
+<td>567.59</td>
+<td>98.8</td>
+<td>396.87</td>
+</tr>
+<tr data-result-method="baseline">
+<th scope="row" class="paper-budget">10</th>
+<td>98.2</td>
+<td>150.82</td>
+<td>97.2</td>
+<td>280.30</td>
+<td>99.4</td>
+<td>205.33</td>
+</tr>
+<tr data-result-method="baseline">
+<th scope="row" class="paper-budget">5</th>
+<td>97.8</td>
+<td>80.97</td>
+<td>97.0</td>
+<td>138.33</td>
+<td>98.4</td>
+<td>99.87</td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="residual">
+<th scope="rowgroup" rowspan="3">+ SAG-Residual</th>
+<th scope="row" class="paper-budget">20</th>
+<td>99.2</td>
+<td><strong>101.22</strong></td>
+<td>97.4</td>
+<td><strong>198.19</strong></td>
+<td>98.6</td>
+<td><strong>185.38</strong></td>
+</tr>
+<tr data-result-method="residual">
+<th scope="row" class="paper-budget">10</th>
+<td>99.2</td>
+<td><strong>69.53</strong></td>
+<td>97.8</td>
+<td><strong>125.30</strong></td>
+<td>99.0</td>
+<td><span class="paper-second">135.32</span></td>
+</tr>
+<tr data-result-method="residual">
+<th scope="row" class="paper-budget">5</th>
+<td>98.4</td>
+<td><strong>50.23</strong></td>
+<td>97.2</td>
+<td><strong>86.59</strong></td>
+<td>98.6</td>
+<td><span class="paper-second">81.48</span></td>
+</tr>
+</tbody>
+<tbody>
+<tr data-result-method="coupling">
+<th scope="rowgroup" rowspan="3">+ SAG-Coupling</th>
+<th scope="row" class="paper-budget">20</th>
+<td>98.0</td>
+<td><span class="paper-second">187.82</span></td>
+<td>97.6</td>
+<td><span class="paper-second">204.99</span></td>
+<td>99.0</td>
+<td><span class="paper-second">201.21</span></td>
+</tr>
+<tr data-result-method="coupling">
+<th scope="row" class="paper-budget">10</th>
+<td>98.6</td>
+<td><span class="paper-second">105.91</span></td>
+<td>97.6</td>
+<td><span class="paper-second">132.60</span></td>
+<td>98.6</td>
+<td><strong>120.81</strong></td>
+</tr>
+<tr data-result-method="coupling">
+<th scope="row" class="paper-budget">5</th>
+<td>98.4</td>
+<td><span class="paper-second">71.99</span></td>
+<td>97.6</td>
+<td><span class="paper-second">99.19</span></td>
+<td>99.2</td>
+<td><strong>72.51</strong></td>
+</tr>
+</tbody>
+</table></div></figure>
+<figure class="paper-results-block paper-hyperparameters" id="results-hyperparameters">
+  <figcaption id="caption-hyperparameters">Effect of SAG hyperparameters <span class="paper-table-units">Faster-WAM · Six RoboTwin 2.0 tasks (randomized) · K = 10</span></figcaption>
+  <a class="figure-zoom figure-themed" href="static/images/hyperparameter-ablation.svg" data-image="static/images/hyperparameter-ablation.svg" data-image-dark="static/images/hyperparameter-ablation-dark.svg" data-title="Ablation Study of SAG Hyperparameters — Figure 3" aria-label="Enlarge Figure 3: SAG hyperparameter ablation">
+    <img class="figure-light" src="static/images/hyperparameter-ablation.svg" width="945" height="685" loading="lazy" alt="Paper Figure 3. Success rate and action generation latency versus window length M: residual thresholds for SAG-Residual on the left, and noise strengths for SAG-Coupling on the right.">
+    <img class="figure-dark" src="static/images/hyperparameter-ablation-dark.svg" width="945" height="685" loading="lazy" alt="Paper Figure 3. Success rate and action generation latency versus window length M: residual thresholds for SAG-Residual on the left, and noise strengths for SAG-Coupling on the right.">
+  </a>
+</figure>
+</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint citation-section" id="citation" aria-labelledby="citation-title">
+      <div class="container">
+        <div class="citation-heading"><h2 class="eyebrow section-index" id="citation-title">§ 6 · Citation</h2><button id="copy-citation" class="copy-citation" type="button">Copy BibTeX</button></div>
+        <pre><code id="bibtex">@misc{xiu2026speculative,
+  title  = {Speculative Action Generation for World Action Models},
+  author = {Xiu, Lingkun and Wang, Xiaobo and Wei, Bingwen and Zhao, Ruoyu and Ning, Jiahong and Li, Maoqing and Wan, Renquan and Zhang, Xiao-Ping and Yu, Jincheng and Chen, Xinlei},
+  year   = {2026},
+  note   = {Manuscript}
+}</code></pre>
+        <span id="copy-status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+  </main>
+
+  <!--
+    Website template attribution:
+    Adapted from Eliahu Horwitz's Academic Project Page Template
+    https://github.com/eliahuhorwitz/Academic-project-page-template
+    and Nerfies by Keunhong Park and collaborators: https://nerfies.github.io/
+    Template license: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/
+  -->
+
+  <dialog id="figure-dialog" aria-label="Enlarged figure">
+    <div class="dialog-toolbar"><button id="close-dialog" aria-label="Close enlarged figure" type="button">Close</button></div>
+    <div class="dialog-image-wrap"><img id="dialog-image" src="static/images/overview.svg" alt=""></div>
+  </dialog>
+</body>
+</html>

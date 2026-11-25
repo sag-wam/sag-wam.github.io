@@ -1,0 +1,119 @@
+"""Typeset latency notation and playback totals with the animation's LaTeX fonts."""
+from copy import deepcopy
+from pathlib import Path
+import re
+import json
+import shutil
+import subprocess
+import tempfile
+
+from lxml import etree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+SVG = 'http://www.w3.org/2000/svg'
+XLINK = 'http://www.w3.org/1999/xlink'
+NOTATION_FORMULAS = [
+    ('dit', r'T_{\mathrm{DiT}}', 'T, subscript DiT'),
+    ('batch', r'T_{\mathrm{batch}}', 'T, subscript batch'),
+    ('approx', r'T_{\mathrm{batch}}\approx T_{\mathrm{DiT}}', 'T batch is approximately equal to T DiT'),
+]
+COUNTER_FORMULAS = [
+    (f'dit-{count}', rf'{count}\times T_{{\mathrm{{DiT}}}}', f'{count} times T DiT')
+    for count in range(11)
+] + [
+    (f'batch-{count}', rf'1\times T_{{\mathrm{{DiT}}}}+{count}\times T_{{\mathrm{{batch}}}}\approx {count + 1}\times T_{{\mathrm{{DiT}}}}',
+     f'1 times T DiT plus {count} times T batch is approximately {count + 1} times T DiT')
+    for count in range(1, 4)
+]
+FORMULAS = NOTATION_FORMULAS + COUNTER_FORMULAS
+
+
+def build(work):
+    tex = [r'\documentclass[10pt]{article}', r'\usepackage{amsmath,fontspec,unicode-math}',
+           r'\setmainfont{Times New Roman}', r'\setmathfont{Cambria Math}', r'\pagestyle{empty}',
+           r'\newwrite\metrics', r'\immediate\openout\metrics=math.metrics', r'\begin{document}']
+    for i, (_, formula, _) in enumerate(FORMULAS, 1):
+        tex += [r'\setbox0=\hbox{$' + formula + '$}',
+                rf'\immediate\write\metrics{{{i}|\the\wd0|\the\ht0|\the\dp0}}',
+                r'\noindent\special{dvisvgm:raw <g id="origin" data-x="{?x}" data-y="{?y}">}\box0\special{dvisvgm:raw </g>}\newpage']
+    tex += [r'\immediate\closeout\metrics', r'\end{document}']
+    (work / 'math.tex').write_text('\n'.join(tex), encoding='utf-8')
+    for name, args in [
+        ('xelatex', ['-no-pdf', '-interaction=nonstopmode', '-halt-on-error', '-no-shell-escape', 'math.tex']),
+        ('dvisvgm', ['--no-fonts', '--exact', '--bbox=min', '--page=1-', '--output=math-%p.svg', 'math.xdv']),
+    ]:
+        tool = shutil.which(name)
+        if not tool:
+            raise RuntimeError(f'{name} is required to rebuild the LaTeX notation')
+        subprocess.run([tool, *args], cwd=work, check=True, capture_output=True)
+
+    metrics = {}
+    for row in (work / 'math.metrics').read_text().splitlines():
+        number, *values = row.split('|')
+        metrics[int(number)] = [float(v.removesuffix('pt')) * 72 / 72.27 for v in values]
+    fragments = {}
+    font_size = 10 * 72 / 72.27
+    pages = {int(path.stem.split('-')[-1]): path for path in work.glob('math-*.svg')}
+    for i, (key, formula, label) in enumerate(FORMULAS, 1):
+        source = ET.fromstring(pages[i].read_bytes())
+        prefix = f'latency-{key}-'
+        for element in source.iter():
+            if element.get('id'):
+                element.set('id', prefix + element.get('id'))
+            for attr in ['href', f'{{{XLINK}}}href']:
+                if element.get(attr, '').startswith('#'):
+                    element.set(attr, '#' + prefix + element.get(attr)[1:])
+        width, height, depth = metrics[i]
+        svg = ET.Element(f'{{{SVG}}}svg', nsmap={None: SVG, 'xlink': XLINK}, attrib={
+            'class': 'inline-math', 'role': 'img', 'aria-label': label, 'data-latex': formula,
+            'viewBox': f'0 {-height:.6f} {width:.6f} {height + depth:.6f}',
+            'style': f'width:{width / font_size:.6f}em;height:{(height + depth) / font_size:.6f}em;vertical-align:{-depth / font_size:.6f}em',
+        })
+        ET.SubElement(svg, f'{{{SVG}}}title').text = formula
+        svg.append(deepcopy(source.find(f'{{{SVG}}}defs')))
+        origin = next(e for e in source.iter() if e.get('id') == prefix + 'origin')
+        group = ET.SubElement(svg, f'{{{SVG}}}g', transform=f'translate({-float(origin.get("data-x"))},{-float(origin.get("data-y"))})', fill='currentColor')
+        group.extend(deepcopy(list(origin)))
+        fragments[key] = ET.tostring(svg, encoding='unicode').replace('\n', '')
+
+    sentence = (fragments['dit'] + ' and ' + fragments['batch']
+                + ' denote single-state and batched DiT call latencies, respectively, with ' + fragments['approx'] + '.')
+    notation = '<span id="sag-latency-notation">' + sentence + '</span>'
+    page = ROOT / 'index.html'
+    content = page.read_text(encoding='utf-8')
+    pattern = r'<span id="sag-latency-notation">.*?</span>'
+    content, count = re.subn(pattern, lambda _: notation, content, flags=re.DOTALL)
+    if count != 1:
+        raise RuntimeError(f'Expected one latency explanation, found {count}')
+    page.write_text(content, encoding='utf-8')
+
+    # All possible totals are typeset at build time. Playback only switches
+    # the selected expression when its value changes, including backward seeks.
+    counters = {key: fragments[key] for key, _, _ in COUNTER_FORMULAS}
+    script = '''/* Generated by scripts/build_latency_notation.py using XeLaTeX. */
+window.SAGLatencyMath = (() => {
+  const formulas = __FORMULAS__;
+  const templates = new Map();
+  return Object.freeze({
+    render(target, key) {
+      if (target.dataset.latencyFormula === key) return;
+      if (!Object.hasOwn(formulas, key)) throw new Error(`Unknown latency formula: ${key}`);
+      const cacheKey = `${target.id}:${key}`;
+      if (!templates.has(cacheKey)) {
+        const template = document.createElement('template');
+        template.innerHTML = formulas[key].replaceAll(`latency-${key}-`, `${target.id}-latency-${key}-`);
+        templates.set(cacheKey, template);
+      }
+      target.replaceChildren(templates.get(cacheKey).content.cloneNode(true));
+      target.dataset.latencyFormula = key;
+    }
+  });
+})();
+'''.replace('__FORMULAS__', json.dumps(counters, ensure_ascii=False))
+    (ROOT / 'static/js/latency-math.js').write_text(script, encoding='utf-8')
+
+
+if __name__ == '__main__':
+    with tempfile.TemporaryDirectory(prefix='sag-latency-math-') as directory:
+        build(Path(directory))
+    print('Rendered three inline expressions and fourteen playback totals with LaTeX.')
